@@ -77,11 +77,10 @@ public class Main {
 		// find the intersection between set1 and set2
 		union.retainAll(set2);
 
-
 		if (union.size() != 0) {
 			ArrayList<Operation> operations1 = t1.getOperations();
 			ArrayList<Operation> operations2 = t2.getOperations();
-			
+
 			// To store operations from t1 that use the objects in the union set
 			ArrayList<Operation> group1 = new ArrayList<Operation>();
 			// To store operations from t2 that use the objects in the union set
@@ -156,26 +155,45 @@ public class Main {
 		return result;
 	}
 
+	// An overloaded method of getEdges that takes a list of transactions. 
+	static ArrayList<Edge> getEdges(ArrayList<Transaction> t) {
+		ArrayList<Edge> result = new ArrayList<Edge>();
+		ArrayList<Edge> temp = new ArrayList<Edge>();
+
+		for (int i = 0; i < t.size() - 1; i++) {
+			for (int j = i + 1; j < t.size(); j++) {
+				temp = getEdges(t.get(i), t.get(j));
+				result.addAll(temp);
+			}
+		}
+		return result;
+	}
+
+	// =========================== Main ================================
 	public static void main(String[] args) {
 		Transaction t1 = new Transaction(1);
 		t1.AddOperation(1, 'R', 'x');
 		t1.AddOperation(2, 'W', 'y');
-
 		Transaction t2 = new Transaction(2);
 		t2.AddOperation(1, 'R', 'y');
 		t2.AddOperation(2, 'W', 'z');
-
 		Transaction t3 = new Transaction(3);
 		t3.AddOperation(1, 'R', 'z');
 		t3.AddOperation(2, 'R', 'x');
 		t3.AddOperation(3, 'W', 'x');
 		t3.AddOperation(4, 'W', 'z');
 
+		ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+		transactions.add(t1);
+		transactions.add(t2);
+		transactions.add(t3);
+
 		t1.Print();
 		t2.Print();
 		t3.Print();
-
 		System.out.println();
+
+		// ============= Getting the Edges using the first approach ==============
 
 		ArrayList<Edge> list1 = getEdges(t1, t2); // 2 iterations
 		ArrayList<Edge> list2 = getEdges(t1, t3); // 2 iterations
@@ -189,14 +207,24 @@ public class Main {
 			Edge e = total.get(i);
 			e.print();
 		}
-
 		System.out.println();
+
+		// ============= Getting the Edges using the second approach =============
 
 		ArrayList<Edge> list = getEdges(t1, t2, t3); // 3 iterations
 		for (int i = 0; i < list.size(); i++) {
 			Edge e = list.get(i);
 			e.print();
 		}
+		System.out.println();
+		
+		// ============= Getting the Edges using the third approach =============
 
+		ArrayList<Edge> edges = getEdges(transactions);
+		for (int i = 0; i < edges.size(); i++) {
+			Edge e = edges.get(i);
+			e.print();
+		}
+		
 	}
 }
