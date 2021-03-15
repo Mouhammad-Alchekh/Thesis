@@ -55,6 +55,44 @@ public class Main {
 			cycles.get(i).print();
 		}
 		System.out.println();
+		System.out.println();
+		System.out.println();
 
+		// ====================== Testing on another Example ===========================
+		Operation op = new Operation(1, 'W', 'x');
+		ArrayList<Edge> test = new ArrayList<Edge>();
+		
+		Edge e1 = new Edge(1, op, 2, op, 1);
+		test.add(e1);
+		Edge e2 = new Edge(2, op, 4, op, 2);
+		test.add(e2);
+		Edge e3 = new Edge(2, op, 7, op, 3);
+		test.add(e3);
+		Edge e4 = new Edge(1, op, 3, op, 4);
+		test.add(e4);
+		Edge e5 = new Edge(3, op, 4, op, 5);
+		test.add(e5);
+		Edge e6 = new Edge(3, op, 5, op, 6);
+		test.add(e6);
+		Edge e7 = new Edge(4, op, 6, op, 7);
+		test.add(e7);
+		Edge e8 = new Edge(5, op, 6, op, 8);
+		test.add(e8);
+		Edge e9 = new Edge(9, op, 8, op, 9);
+		test.add(e9);
+		
+		for (int i = 0; i < test.size(); i++) {
+			Edge e = test.get(i);
+			e.print();
+		}
+		System.out.println();
+		
+		ArrayList<Cycle> cycles2 = Tools.getCycles(test);
+		System.out.println("The Possible Cycles Are:");
+		for (int i = 0; i < cycles2.size(); i++) {
+			int n = i + 1;
+			System.out.println("Cycle number " + n);
+			cycles2.get(i).print();
+		}
 	}
 }

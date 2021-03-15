@@ -154,7 +154,7 @@ public abstract class Tools {
 
 		ArrayList<Edge> result1 = findEdges(t1, group12, t2, group21, edgeIdCounter);
 		int lastIndex = result1.size() - 1;
-		//continue the Id counter from the last id in the previous list
+		// continue the Id counter from the last id in the previous list
 		edgeIdCounter = result1.get(lastIndex).getId();
 
 		ArrayList<Edge> result2 = findEdges(t1, group13, t3, group31, edgeIdCounter);
@@ -244,26 +244,46 @@ public abstract class Tools {
 	// This method connect a given edge to every link that can be connected to.
 	private static void connectEdge(ArrayList<Cycle> links, Edge e) {
 		for (int i = 0; i < links.size(); i++) {
-
 			Cycle currentLink = links.get(i);
-			Edge start = currentLink.getFirstEdge();
-			Edge end = currentLink.getLastEdge();
+			// Create a new edge and copy the given edge into.
+			// This is it to prevent any problem caused by pointers.
+			Edge tempEdge = new Edge(e.getT1ID(), e.getOp1(), e.getT2ID(), e.getOp2(), e.getId());
 
 			// if the link has a similar edge, do nothing.
-			if (hasSimilar(currentLink, e))
+			if (hasSimilar(currentLink, tempEdge))
 				continue;
 
-			if (isConnectable(start, e)) {
-				// to keep edges in cycles ordered in a correct way
-				if (e.getT2ID() != start.getT1ID())
-					e.flip();
-				// connect the new edge
-				currentLink.addEdgeFront(e);
+			if (currentLink.size() == 1) {
+				Edge start = currentLink.getFirstEdge();
+				// connecting an edge with a link of size 1 in a correct way
+				if (start.getT1ID() == tempEdge.getT2ID()) {
+					currentLink.addEdgeFront(tempEdge);
+				} else if (start.getT1ID() == tempEdge.getT1ID()) {
+					tempEdge.flip();
+					currentLink.addEdgeFront(tempEdge);
+				} else if (start.getT2ID() == tempEdge.getT1ID()) {
+					currentLink.addEdge(tempEdge);
+				} else if (start.getT2ID() == tempEdge.getT2ID()) {
+					tempEdge.flip();
+					currentLink.addEdge(tempEdge);
+				}
 
-			} else if (isConnectable(end, e)) {
-				if (e.getT1ID() != end.getT2ID())
-					e.flip();
-				currentLink.addEdge(e);
+			} else {
+				Edge start = currentLink.getFirstEdge();
+				Edge end = currentLink.getLastEdge();
+
+				if (start.getT1ID() == tempEdge.getT2ID()) {
+					currentLink.addEdgeFront(tempEdge);
+				} else if (start.getT1ID() == tempEdge.getT1ID()) {
+					// to keep edges in cycles ordered in a correct way
+					tempEdge.flip();
+					currentLink.addEdgeFront(tempEdge);
+				} else if (end.getT2ID() == tempEdge.getT1ID()) {
+					currentLink.addEdge(tempEdge);
+				} else if (end.getT2ID() == tempEdge.getT2ID()) {
+					tempEdge.flip();
+					currentLink.addEdge(tempEdge);
+				}
 			}
 		}
 	}
@@ -274,6 +294,7 @@ public abstract class Tools {
 	// are created from this split
 	private static void findSplit(ArrayList<Cycle> links, Edge e) {
 		int splitPoint = 0;
+		ArrayList<Cycle> newLinks = new ArrayList<Cycle>();
 
 		// iterate over each link of the given list of links
 		for (int i = 0; i < links.size(); i++) {
@@ -293,8 +314,8 @@ public abstract class Tools {
 					Cycle second = new Cycle();
 					second.addEdge(currentLink.get(1));
 					// add the new links to the list of links
-					links.add(first);
-					links.add(second);
+					newLinks.add(first);
+					newLinks.add(second);
 				}
 
 			}
@@ -321,11 +342,12 @@ public abstract class Tools {
 					second.addEdge(currentLink.get(l));
 				}
 
-				links.add(first);
-				links.add(second);
+				newLinks.add(first);
+				newLinks.add(second);
 				splitPoint = 0;
 			}
 		}
+		links.addAll(newLinks);
 	}
 
 	// delete repeated links
@@ -370,6 +392,8 @@ public abstract class Tools {
 
 			// if the start = end , a link is a cycle.
 			if (start.getT1ID() == end.getT2ID()) {
+				// create a new cycle and copy the found cycle into it and then add it.This is
+				// to prevent the cycle to be changed later due to the nature of pointers.
 				Cycle newCycle = new Cycle();
 				newCycle.copyCycle(current);
 				result.add(newCycle);
@@ -406,7 +430,7 @@ public abstract class Tools {
 	// if any cycle in this list has a similar edge, it creates a new cycle by
 	// replacing the found edge with the new given edge. and then add this new cycle
 	// to the list.
-	private static void addReplaceable(ArrayList<Cycle> result, Edge e) {
+	private static void detectBySimilar(ArrayList<Cycle> result, Edge e) {
 		int replacePoint = 0;
 		boolean canReplace = false;
 
@@ -474,11 +498,6 @@ public abstract class Tools {
 					result.addAll(newCycles);
 					// delete any repeated link
 					deleteDouble(links);
-					// find new cycles by replacing the current edge with any similar edge in any
-					// cycle. this method is needed because if a link has a similar edge this link
-					// will not be split and it will not connect the given edge. this might lead
-					// to missing some cycles. this method will compensate that.
-					addReplaceable(result, currentEdge);
 				}
 			}
 		}
@@ -488,10 +507,10 @@ public abstract class Tools {
 			// cycle. this method is needed because if a link has a similar edge this link
 			// will not be split and it will not connect the given edge. this might lead
 			// to missing some cycles. this method will compensate that.
-			addReplaceable(result, currentEdge);
+			detectBySimilar(result, currentEdge);
 		}
 
-		// do a second iteration over the given set of edges to make sure that all tiny
+		// do another iteration over the given set of edges to make sure that all tiny
 		// cycles are added.
 		ArrayList<Cycle> tinyCycles = getTinyCycles(edges);
 		result.addAll(tinyCycles);
