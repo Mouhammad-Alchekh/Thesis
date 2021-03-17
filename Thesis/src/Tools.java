@@ -323,9 +323,10 @@ public abstract class Tools {
 			// the loop is to find the split Point.
 			// A split point cannot be at the start or at the end.
 			for (int j = 1; j < currentLink.size() - 1; j++) {
-				if (isConnectable(currentLink.get(j), e))
+				if (isConnectable(currentLink.get(j), e)) {
 					splitPoint = j;
-				break;
+					break;
+				}
 			}
 
 			// if there is a split point
@@ -333,13 +334,27 @@ public abstract class Tools {
 				Cycle first = new Cycle();
 				Cycle second = new Cycle();
 
-				// Create the first link
-				for (int k = 0; k < splitPoint; k++) {
-					first.addEdge(currentLink.get(k));
-				}
-				// Create the second link
-				for (int l = splitPoint; l < currentLink.size(); l++) {
-					second.addEdge(currentLink.get(l));
+				// if the mutual node is a left node in the found edge
+				// Ex: the edge at the split point is T2 <-> T4 and the given edge is T2 <-> T8
+				if (currentLink.get(splitPoint).mutualNodeOnLeft(e)) {
+					// Create the first link
+					for (int k = 0; k < splitPoint; k++) {
+						first.addEdge(currentLink.get(k));
+					}
+					// Create the second link
+					for (int l = splitPoint; l < currentLink.size(); l++) {
+						second.addEdge(currentLink.get(l));
+					}
+
+					// if the mutual node is a right node in the found edge
+					// Ex: the edge at the split point is T4 <-> T2 and the given edge is T2 <-> T8
+				} else {
+					for (int k = 0; k <= splitPoint; k++) {
+						first.addEdge(currentLink.get(k));
+					}
+					for (int l = splitPoint + 1; l < currentLink.size(); l++) {
+						second.addEdge(currentLink.get(l));
+					}
 				}
 
 				newLinks.add(first);
@@ -503,10 +518,12 @@ public abstract class Tools {
 		}
 		for (int i = 0; i < edges.size(); i++) {
 			Edge currentEdge = edges.get(i);
-			// find new cycles by replacing the current edge with any similar edge in any
-			// cycle. this method is needed because if a link has a similar edge this link
-			// will not be split and it will not connect the given edge. this might lead
-			// to missing some cycles. this method will compensate that.
+			/**
+			 * find new cycles by replacing the current edge with any similar edge in any
+			 * cycle. this method is needed because if a link has a similar edge this link
+			 * will not be split and it will not connect the given edge. this might lead to
+			 * missing some cycles. this method will compensate that.
+			 **/
 			detectBySimilar(result, currentEdge);
 		}
 

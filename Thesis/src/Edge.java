@@ -1,8 +1,10 @@
 
 public class Edge {
 	private int id;
+	// This represent the node on the left
 	private int t1ID;
 	private Operation op1;
+	// This represent the node on the right
 	private int t2ID;
 	private Operation op2;
 
@@ -60,8 +62,8 @@ public class Edge {
 		char obj1 = op1.getObject();
 		char obj2 = op1.getObject();
 
-		System.out.println(String.format("%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", "( ", "T", t1ID, " , ", type1, t1ID,
-				"[", obj1, "]", " , ", type2, t2ID, "[", obj2, "]", " , ", "T", t2ID,  " )", "     ID = ", id));
+		System.out.println(String.format("%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", "( ", "T", t1ID, " , ", type1,
+				t1ID, "[", obj1, "]", " , ", type2, t2ID, "[", obj2, "]", " , ", "T", t2ID, " )", "     ID = ", id));
 	}
 
 	public void flip() {
@@ -73,5 +75,11 @@ public class Edge {
 
 		this.op1 = this.op2;
 		this.op2 = temp2;
+	}
+
+	// This method takes an edge and checks if it can be connected on the left side.
+	// this means the mutual node between the 2 edges is a left node in this edge.
+	public boolean mutualNodeOnLeft(Edge e2) {
+		return (this.getT1ID() == e2.getT1ID() || this.getT1ID() == e2.getT2ID());
 	}
 }
