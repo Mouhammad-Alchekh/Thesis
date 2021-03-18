@@ -35,4 +35,13 @@ public class Operation {
 		this.object = object;
 	}
 
+	// check if a given operation is different
+	public boolean isDifferent(Operation op2) {
+		boolean result = true;
+		// If both operations have the same type and object, they are similar.
+		if (this.type == op2.getType() && this.object == op2.getObject())
+			result = false;
+		return result;
+	}
+
 }

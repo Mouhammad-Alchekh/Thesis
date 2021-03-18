@@ -537,4 +537,131 @@ public abstract class Tools {
 
 		return result;
 	}
+
+	// =============== This Part is for Deciding The Isolation Level ===============
+
+	// This method returns all Non-Trivial cycles from a list of cycles.
+	private static ArrayList<Cycle> getNonTrivialCycles(ArrayList<Cycle> cycles) {
+		ArrayList<Cycle> result = new ArrayList<Cycle>();
+
+		for (int i = 0; i < cycles.size(); i++) {
+
+			// get each cycle and iterate over it
+			Cycle currentCycle = cycles.get(i);
+			for (int j = 0; j < currentCycle.size() - 1; j++) {
+
+				// for each iteration, get a consecutive pair of edges
+				Edge currentEdge = currentCycle.getEdge(j);
+				Edge nextEdge = currentCycle.getEdge(j + 1);
+
+				// Check the condition of Non Trivial Cycle
+				if (currentEdge.getOp2().isDifferent(nextEdge.getOp1())) {
+					Cycle newCycle = new Cycle();
+					newCycle.copyCycle(currentCycle);
+					result.add(newCycle);
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
+	// this method checks if a transaction has a write operation that conflicts with
+	// an operation in the given list writeOp.
+	private static boolean containsWriteConflict(Transaction t, ArrayList<Operation> writeOp) {
+
+		for (int i = 0; i < t.size(); i++) {
+			if (writeOp.contains(t.getOperations().get(i))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// this method returns all prefix-write conflict-free cycles for a set of
+	// transactions
+	private static ArrayList<Cycle> getPrefWConfFreeCycles(ArrayList<Cycle> cycles, ArrayList<Transaction> t) {
+
+		ArrayList<Cycle> result = new ArrayList<Cycle>();
+		int tIndex = -1;
+		boolean containsWriteConflict = false;
+
+		for (int i = 0; i < cycles.size(); i++) {
+
+			// get each cycle and iterate over it
+			Cycle currentCycle = cycles.get(i);
+
+			for (int j = 0; j < currentCycle.size() - 1; j++) {
+
+				// for each iteration, get a consecutive pairs of edges
+				Edge currentEdge = currentCycle.getEdge(j);
+				Edge nextEdge = currentCycle.getEdge(j + 1);
+
+				// check if transferable
+				int tId = currentEdge.getT2ID();
+				Operation op1 = currentEdge.getOp2();
+				Operation op2 = nextEdge.getOp1();
+
+				// to get the corresponding transaction
+				for (int k = 0; k < t.size(); k++) {
+					if (t.get(k).getId() == tId) {
+						tIndex = k;
+						break;
+					}
+				}
+
+				if (tIndex != -1) {
+					int index1 = t.get(tIndex).getOperations().indexOf(op1);
+					int index2 = t.get(tIndex).getOperations().indexOf(op2);
+
+					// if this happens, the cycle is transferable
+					if (index2 < index1) {
+						// get all write operations in the prefix part of the transaction
+						ArrayList<Operation> writeOp = new ArrayList<Operation>();
+						for (int k = 0; k < index2; k++) {
+							if (t.get(tIndex).getOperations().get(k).getType() == 'W')
+								writeOp.add(t.get(tIndex).getOperations().get(k));
+						}
+						// check if the cycle is prefix-write conflict-free
+						for (int k = 0; k < t.size(); k++) {
+							if (containsWriteConflict(t.get(k), writeOp))
+								containsWriteConflict = true;
+						}
+						// if there is no conflict, the cycle is a prefix-write conflict-free
+						if (!containsWriteConflict) {
+							Cycle newCycle = new Cycle();
+							newCycle.copyCycle(currentCycle);
+							result.add(newCycle);
+							// stop iterating over the current cycle
+							break;
+						}
+					}
+				}
+			}
+			// After checking the cycle, reset the variables.
+			containsWriteConflict = false;
+			tIndex = -1;
+		}
+		return result;
+	}
+
+	public static void DecideIsolationLevel(ArrayList<Transaction> t) {
+		ArrayList<Edge> edges = getEdges(t);
+		ArrayList<Cycle> allCycles = getCycles(edges);
+
+		ArrayList<Cycle> NonTrivialCycles = getNonTrivialCycles(allCycles);
+		// get Prefix-Write Conflict-Free cycles.
+		ArrayList<Cycle> prefWConfFreeCycles = getPrefWConfFreeCycles(NonTrivialCycles, t);
+
+		System.out.println("Number of Non-Trivial Cycles = " + NonTrivialCycles.size());
+		System.out.println("Number of Prefix-Write Conflict-Free Cycles = " + prefWConfFreeCycles.size());
+
+		if (NonTrivialCycles.isEmpty()) {
+			System.out.println("The given set of transactions is allowed under NO ISOLATION level");
+
+		} else if (prefWConfFreeCycles.isEmpty()) {
+			System.out.println("The given set of transactions is allowed under READ UNCOMMITTED level");
+		}
+
+	}
 }
