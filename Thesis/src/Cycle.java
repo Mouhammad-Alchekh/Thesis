@@ -78,4 +78,24 @@ public class Cycle {
 		}
 		System.out.println();
 	}
+
+	// This method reorder the seuqnce of the edges in the cycle list and make the
+	// given edge the first edge in this cycle.
+	public void reorder(Edge e) {
+		int index = -1;
+		for (int i = 0; i < cycle.size(); i++) {
+			if (cycle.get(i).getId() == e.getId()) {
+				index = i;
+				break;
+			}
+		}
+		for (int i = 0; i < index; i++) {
+			Edge temp = cycle.get(i);
+			cycle.add(temp);
+		}
+		for (int i = 0; i < index; i++) {
+			cycle.removeFirst();
+		}
+
+	}
 }

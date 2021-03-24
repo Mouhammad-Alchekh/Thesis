@@ -545,20 +545,24 @@ public abstract class Tools {
 		ArrayList<Cycle> result = new ArrayList<Cycle>();
 
 		for (int i = 0; i < cycles.size(); i++) {
-
 			// get each cycle and iterate over it
 			Cycle currentCycle = cycles.get(i);
-			for (int j = 0; j < currentCycle.size() - 1; j++) {
 
-				// for each iteration, get a consecutive pair of edges
+			for (int j = 0; j < currentCycle.size(); j++) {
+				// for each iteration, get a consecutive pairs of edges.
+				int k = j + 1;
+				if (j == currentCycle.size() - 1)
+					// to compare the first and the last edges. They are connected to each other.
+					k = 0;
 				Edge currentEdge = currentCycle.getEdge(j);
-				Edge nextEdge = currentCycle.getEdge(j + 1);
-
+				Edge nextEdge = currentCycle.getEdge(k);
 				// Check the condition of Non Trivial Cycle
 				if (currentEdge.getOp2().isDifferent(nextEdge.getOp1())) {
 					Cycle newCycle = new Cycle();
 					newCycle.copyCycle(currentCycle);
 					result.add(newCycle);
+					// break looping over the cycle after satisfying the condition of Non Trivial
+					// Cycle.
 					break;
 				}
 			}
@@ -568,7 +572,7 @@ public abstract class Tools {
 
 	// this method checks if a transaction has a write operation that conflicts with
 	// an operation in the given list writeOp.
-	private static boolean containsWriteConflict(Transaction t, ArrayList<Operation> writeOp) {
+	private static boolean hasWriteConflict(Transaction t, ArrayList<Operation> writeOp) {
 
 		for (int i = 0; i < t.size(); i++) {
 			if (writeOp.contains(t.getOperations().get(i))) {
@@ -578,89 +582,476 @@ public abstract class Tools {
 		return false;
 	}
 
-	// this method returns all prefix-write conflict-free cycles for a set of
-	// transactions
-	private static ArrayList<Cycle> getPrefWConfFreeCycles(ArrayList<Cycle> cycles, ArrayList<Transaction> t) {
+	// This method checks every transaction in a given list of transactions to see
+	// if it has a write operation that conflicts with any operation in the given
+	// writeOp list.
+	private static boolean containsWriteConflict(ArrayList<Operation> writeOp, ArrayList<Transaction> t) {
+		for (int k = 0; k < t.size(); k++) {
+			if (hasWriteConflict(t.get(k), writeOp))
+				return true;
+		}
+		return false;
+	}
 
-		ArrayList<Cycle> result = new ArrayList<Cycle>();
-		int tIndex = -1;
-		boolean containsWriteConflict = false;
+	// This method takes a transaction ID and a list of transactions as an input and
+	// return the index of the transaction that has the same ID.
+	private static int getTransactionPosition(int id, ArrayList<Transaction> t) {
+		for (int k = 0; k < t.size(); k++) {
+			if (t.get(k).getId() == id)
+				return k;
+		}
+		return -1;
+	}
 
-		for (int i = 0; i < cycles.size(); i++) {
-
-			// get each cycle and iterate over it
-			Cycle currentCycle = cycles.get(i);
-
-			for (int j = 0; j < currentCycle.size() - 1; j++) {
-
-				// for each iteration, get a consecutive pairs of edges
-				Edge currentEdge = currentCycle.getEdge(j);
-				Edge nextEdge = currentCycle.getEdge(j + 1);
-
-				// check if transferable
-				int tId = currentEdge.getT2ID();
-				Operation op1 = currentEdge.getOp2();
-				Operation op2 = nextEdge.getOp1();
-
-				// to get the corresponding transaction
-				for (int k = 0; k < t.size(); k++) {
-					if (t.get(k).getId() == tId) {
-						tIndex = k;
-						break;
-					}
-				}
-
-				if (tIndex != -1) {
-					int index1 = t.get(tIndex).getOperations().indexOf(op1);
-					int index2 = t.get(tIndex).getOperations().indexOf(op2);
-
-					// if this happens, the cycle is transferable
-					if (index2 < index1) {
-						// get all write operations in the prefix part of the transaction
-						ArrayList<Operation> writeOp = new ArrayList<Operation>();
-						for (int k = 0; k < index2; k++) {
-							if (t.get(tIndex).getOperations().get(k).getType() == 'W')
-								writeOp.add(t.get(tIndex).getOperations().get(k));
-						}
-						// check if the cycle is prefix-write conflict-free
-						for (int k = 0; k < t.size(); k++) {
-							if (containsWriteConflict(t.get(k), writeOp))
-								containsWriteConflict = true;
-						}
-						// if there is no conflict, the cycle is a prefix-write conflict-free
-						if (!containsWriteConflict) {
-							Cycle newCycle = new Cycle();
-							newCycle.copyCycle(currentCycle);
-							result.add(newCycle);
-							// stop iterating over the current cycle
-							break;
-						}
-					}
-				}
-			}
-			// After checking the cycle, reset the variables.
-			containsWriteConflict = false;
-			tIndex = -1;
+	// This method returns all write operations in a transactions that happen before
+	// a specific index.
+	private static ArrayList<Operation> getprefixWriteOps(int index, Transaction t) {
+		ArrayList<Operation> result = new ArrayList<Operation>();
+		for (int k = 0; k < index; k++) {
+			if (t.getOperations().get(k).getType() == 'W')
+				result.add(t.getOperations().get(k));
 		}
 		return result;
 	}
+
+	// This method checks if a consecutive 2 edges in a cycle can make it
+	// transferable or not, and it will return a list of information about where the
+	// transfer point is. if the cycle is not transferable, the returned list will
+	// be empty.
+	private static ArrayList<Integer> trantransferableInfo(Edge currentEdge, Edge nextEdge, ArrayList<Transaction> t) {
+		ArrayList<Integer> result = new ArrayList<Integer>();
+		// These are needed to check if a cycle is transferable.
+		int tId = currentEdge.getT2ID();
+		Operation op1 = currentEdge.getOp2();
+		Operation op2 = nextEdge.getOp1();
+		// get the corresponding transaction of the two operations
+		int tIndex = getTransactionPosition(tId, t);
+		// get the index of each operation
+		int index1 = t.get(tIndex).getOperations().indexOf(op1);
+		int index2 = t.get(tIndex).getOperations().indexOf(op2);
+		// if this happens, the cycle is transferable
+		if (index2 < index1) {
+			// add the info about the tranfer point to the result and return it.
+			result.add(tIndex);
+			result.add(index2);
+			result.add(tId);
+			return result;
+		}
+		return result;
+	}
+
+	// This method returns a list prefix-write conflict-free cycles for a set of
+	// transactions along with a list that contains a split point for each cycle.
+	private static CyclesAndPoints getCyclesAndPoints(ArrayList<Cycle> cycles, ArrayList<Transaction> t) {
+		ArrayList<Cycle> result = new ArrayList<Cycle>();
+		ArrayList<SplitPoint> splitPoints = new ArrayList<SplitPoint>();
+		boolean containsWriteConflict = false;
+
+		for (int i = 0; i < cycles.size(); i++) {
+			// get each cycle and iterate over it
+			Cycle currentCycle = cycles.get(i);
+
+			for (int j = 0; j < currentCycle.size(); j++) {
+				// for each iteration, get a consecutive pairs of edges.
+				int k = j + 1;
+				if (j == currentCycle.size() - 1)
+					// to compare the first and the last edges. They are connected to each other.
+					k = 0;
+				Edge currentEdge = currentCycle.getEdge(j);
+				Edge nextEdge = currentCycle.getEdge(k);
+
+				ArrayList<Integer> transferInfo = trantransferableInfo(currentEdge, nextEdge, t);
+				// if this happens, the cycle is transferable
+				if (transferInfo.size() != 0) {
+					int tIndex = transferInfo.get(0);
+					int index2 = transferInfo.get(1);
+					int tId = transferInfo.get(2);
+					// get all write operations in the prefix part of the transaction
+					ArrayList<Operation> writeOp = getprefixWriteOps(index2, t.get(tIndex));
+					// check if the cycle is prefix-write conflict-free.
+					containsWriteConflict = containsWriteConflict(writeOp, t);
+					// if there is no conflict, the cycle is a prefix-write conflict-free
+					if (!containsWriteConflict) {
+						SplitPoint splitP = new SplitPoint(tIndex, index2, tId);
+						splitPoints.add(splitP);
+						Cycle newCycle = new Cycle();
+						newCycle.copyCycle(currentCycle);
+						result.add(newCycle);
+						break;
+					}
+				}
+			}
+			containsWriteConflict = false;
+		}
+		CyclesAndPoints combined = new CyclesAndPoints(result, splitPoints);
+		return combined;
+	}
+
+	// This method returns all split schedules that can be constructed from a given
+	// list of prefix-write conflict-free cycles.
+	private static ArrayList<Schedule> getSplitSchedules(ArrayList<Cycle> cycles, ArrayList<SplitPoint> splitPoints,
+			ArrayList<Transaction> t) {
+		ArrayList<Schedule> result = new ArrayList<Schedule>();
+
+		// the size of cycles list and the size of splitPoints list are equal.
+		for (int i = 0; i < cycles.size(); i++) {
+			Cycle currentCycle = cycles.get(i);
+			Schedule newSchedule = new Schedule("Split Schedule");
+
+			int splitTIndex = splitPoints.get(i).gettIndex();
+			Transaction splitTransaction = t.get(splitTIndex);
+			int splitPosition = splitPoints.get(i).getOpIndex();
+
+			Set<Integer> usedTransactions = new HashSet<Integer>();
+			usedTransactions.add(splitTransaction.getId());
+
+			// First Step: add all operations in the prefix part of the split transaction to
+			// the schedule
+			for (int j = 0; j <= splitPosition; j++) {
+				Operation op = splitTransaction.getOperations().get(j);
+				newSchedule.AddOperation(op, splitTransaction.getId());
+			}
+			// Second Step: add all transactions that are part of the cycle
+			for (int j = 0; j < currentCycle.size(); j++) {
+				int Tid = currentCycle.getEdge(j).getT1ID();
+				if (Tid == splitTransaction.getId())
+					continue;
+				int tIndex = getTransactionPosition(Tid, t);
+				Transaction currentTransaction = t.get(tIndex);
+				usedTransactions.add(Tid);
+				// add all operations in the current transaction to the schedule
+				for (int k = 0; k < currentTransaction.size(); k++) {
+					Operation op = currentTransaction.getOperations().get(k);
+					newSchedule.AddOperation(op, Tid);
+				}
+			}
+			// Third Step: add all operations in the postfix part of the split transaction
+			// to the schedule
+			for (int j = splitPosition + 1; j < splitTransaction.size(); j++) {
+				Operation op = splitTransaction.getOperations().get(j);
+				newSchedule.AddOperation(op, splitTransaction.getId());
+			}
+			// Last Step: add the rest transactions
+			for (int j = 0; j < t.size(); j++) {
+				Transaction currentTransaction = t.get(j);
+				if (usedTransactions.contains(currentTransaction.getId()))
+					continue;
+				for (int k = 0; k < currentTransaction.size(); k++) {
+					Operation op = currentTransaction.getOperations().get(k);
+					newSchedule.AddOperation(op, currentTransaction.getId());
+				}
+			}
+			result.add(newSchedule);
+		}
+		return result;
+	}
+
+	// This method takes a cycle that is transferable on its first edge and return
+	// the index of T prime, which is the last transaction we can open consecutively
+	// in this cycle starting from the first transaction.
+	private static int getInitialTPrimeIndex(Cycle c, ArrayList<Transaction> t) {
+		// at the begining "T" is equal to "T prime".
+		int tPrimeIndex = 0;
+		// check the next transactions if they can be opened.
+		for (int i = 0; i < c.size() - 1; i++) {
+			Edge currentE = c.getEdge(i);
+			Edge nextE = c.getEdge(i + 1);
+			// if the cycle is transferable on the next 2 edges, then it is transferable on
+			// the next transaction. And this transaction can be opened.
+			if (trantransferableInfo(currentE, nextE, t).size() != 0) {
+				tPrimeIndex++;
+				// if the cycle is not transferable on the next transaction, stop.
+			} else {
+				break;
+			}
+		}
+		return tPrimeIndex;
+	}
+
+	// This method takes a cycle that is transferable on its first edge and return
+	// a list of split indices of all transactions from T to the furthest T prime.
+	private static ArrayList<Integer> getMultiSplitPositions(Cycle c, ArrayList<Transaction> t) {
+		ArrayList<Integer> result = new ArrayList<Integer>();
+
+		// First, add the split position of the first transaction. because the cycle is
+		// transferable on its first transaction.
+		ArrayList<Integer> firstTransferInfo = trantransferableInfo(c.getEdge(c.size() - 1), c.getEdge(0), t);
+		result.add(firstTransferInfo.get(1));
+
+		// check the next transactions if they can be opened.
+		for (int i = 0; i < c.size() - 1; i++) {
+			Edge currentE = c.getEdge(i);
+			Edge nextE = c.getEdge(i + 1);
+			// if the cycle is transferable on the next 2 edges, then it is transferable on
+			// the next transaction. And this transaction can be opened.
+			ArrayList<Integer> transferInfo = trantransferableInfo(currentE, nextE, t);
+			if (transferInfo.size() != 0) {
+				// add the index on the operation that determines the slpit point.
+				result.add(transferInfo.get(1));
+				// if the cycle is not transferable on the next transaction, stop.
+			} else {
+				break;
+			}
+		}
+		return result;
+	}
+
+	// This method returns the prefix and the postfix of each transaction that can
+	// be oppened starting from "T" until the furthest "T Prime"
+	private static ArrayList<PrePostFix> getPrePostFix(Cycle c, int tPrimeIndex, ArrayList<Integer> MultiSplitIndices,
+			ArrayList<Transaction> t) {
+
+		ArrayList<PrePostFix> result = new ArrayList<PrePostFix>();
+
+		for (int i = 0; i < tPrimeIndex; i++) {
+			int tId = c.getEdge(i).getT1ID();
+			int tIndex = getTransactionPosition(tId, t);
+			int splitPosition = MultiSplitIndices.get(i);
+
+			Transaction temp = t.get(tIndex);
+			PrePostFix prefixPostfix = new PrePostFix(tId, splitPosition);
+
+			for (int j = 0; j <= splitPosition; j++) {
+				prefixPostfix.addPrefixOp(temp.getOperations().get(j));
+			}
+			for (int j = splitPosition + 1; j < temp.size(); j++) {
+				prefixPostfix.addPostfixOp(temp.getOperations().get(j));
+			}
+			result.add(prefixPostfix);
+		}
+		return result;
+	}
+
+	// this method checks if two lists have any conflict "write-write" or
+	// "write-read".
+	private static boolean containsConflict(ArrayList<Operation> first, ArrayList<Operation> second) {
+
+		for (int i = 0; i < first.size(); i++) {
+			Operation op1 = first.get(i);
+
+			for (int j = 0; j < second.size(); j++) {
+				Operation op2 = second.get(j);
+				if ((op1.getObject() == op2.getObject()) && ((op1.getType() == 'W') || (op2.getType() == 'W')))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	// This method checks if a cycle is a multi-prefix conflict-free cycle and
+	// return an object that contain information about that including the index of T
+	// prime and prefix & postfix of the transactions that can be oppened.
+	private static MultiSplitInfo checkConflict(Cycle c, ArrayList<Transaction> t) {
+		// at the begining get the furthest index of (T prime).
+		int tPrimeIndex = getInitialTPrimeIndex(c, t);
+		// get the split position of every transaction from "T" to "T Prime".
+		ArrayList<Integer> MultiSplitIndices = getMultiSplitPositions(c, t);
+		// get the prefix & postfix part of every transaction from "T" to "T Prime".
+		ArrayList<PrePostFix> prePostFix = getPrePostFix(c, tPrimeIndex, MultiSplitIndices, t);
+
+		boolean containsConflict = false;
+		boolean firstCondition = false;
+		boolean secondCondition = false;
+		boolean thirdCondition = false;
+
+		// there is always a number k > 0 such that the first k transactions occurring
+		// in C are open. When tPrimeIndex = 0 , k = 1.
+		while (tPrimeIndex >= 0) {
+
+			for (int index = 0; index < tPrimeIndex; index++) {
+				// for each prefix, get its write operations and check the three conditions.
+				int tId = prePostFix.get(index).gettId();
+				int splitIndex = prePostFix.get(index).getSplitIndex();
+				int tIndex = getTransactionPosition(tId, t);
+				ArrayList<Operation> currentPrefixWriteOp = getprefixWriteOps(splitIndex, t.get(tIndex));
+
+				// check the first condition
+				for (int i = index + 1; i < tPrimeIndex; i++) {
+					ArrayList<Operation> prefixJ = prePostFix.get(i).getPrefix();
+					if (containsConflict(currentPrefixWriteOp, prefixJ))
+						firstCondition = true;
+				}
+				// check the second condition.
+				for (int i = tPrimeIndex; i < c.size(); i++) {
+					// get the each transaction that happens after T Prime
+					tId = c.getEdge(i).getT1ID();
+					tIndex = getTransactionPosition(tId, t);
+					Transaction tJ = t.get(tIndex);
+					if (containsConflict(currentPrefixWriteOp, tJ.getOperations()))
+						secondCondition = true;
+				}
+				// check the third condition
+				for (int i = 0; i < index; i++) {
+					ArrayList<Operation> postfixJ = prePostFix.get(i).getPostfix();
+					if (containsConflict(currentPrefixWriteOp, postfixJ))
+						thirdCondition = true;
+				}
+				// If any of the three conditions was not satisfied, there is a conflict.
+				if (firstCondition || secondCondition || thirdCondition) {
+					containsConflict = true;
+					break;
+				}
+			}
+			if (containsConflict)
+				break;
+			tPrimeIndex--;
+		}
+		MultiSplitInfo multiSplitInfo = new MultiSplitInfo(containsConflict, tPrimeIndex, prePostFix);
+		return multiSplitInfo;
+	}
+
+	// This method returns a list multi-prefix conflict-free cycles for a set of
+	// transactions along with a list of multi-split information for each cycle.
+	private static MPrefCyclesAndPoints getMultiPrefCyclesAndPoints(ArrayList<Cycle> cycles, ArrayList<Transaction> t) {
+		ArrayList<Cycle> multiPrefCycles = new ArrayList<Cycle>();
+		ArrayList<MultiSplitInfo> multiSplitInfo = new ArrayList<MultiSplitInfo>();
+		boolean containsConflict = false;
+
+		for (int i = 0; i < cycles.size(); i++) {
+			// get each cycle and iterate over it
+			Cycle currentCycle = cycles.get(i);
+
+			for (int j = 0; j < currentCycle.size(); j++) {
+				// for each iteration, get a consecutive pairs of edges.
+				int k = j + 1;
+				if (j == currentCycle.size() - 1)
+					// to compare the first and the last edges. They are connected to each other.
+					k = 0;
+				Edge currentEdge = currentCycle.getEdge(j);
+				Edge nextEdge = currentCycle.getEdge(k);
+
+				ArrayList<Integer> transferInfo = trantransferableInfo(currentEdge, nextEdge, t);
+				// if this happens, the cycle is transferable
+				if (transferInfo.size() != 0) {
+					// first, reorder the cycle to make the first edge the edge that starts with the
+					// transaction that has the transfer point.
+					currentCycle.reorder(nextEdge);
+
+					MultiSplitInfo splitInfo = checkConflict(currentCycle, t);
+					containsConflict = splitInfo.getContainsConflict();
+
+					// if there is no conflict, the cycle is a prefix-write conflict-free
+					if (!containsConflict) {
+						Cycle newCycle = new Cycle();
+						newCycle.copyCycle(currentCycle);
+						multiPrefCycles.add(newCycle);
+						multiSplitInfo.add(splitInfo);
+						break;
+					}
+				}
+			}
+			containsConflict = false;
+		}
+		MPrefCyclesAndPoints result = new MPrefCyclesAndPoints(multiPrefCycles, multiSplitInfo);
+		return result;
+	}
+
+	// This method takes a list of multi-prefix conflict-free cycles and returns a
+	// multi-split schedule for each cycle.
+	private static ArrayList<Schedule> getMultiSplitSchedules(ArrayList<Cycle> cycles, ArrayList<MultiSplitInfo> info,
+			ArrayList<Transaction> t) {
+		ArrayList<Schedule> result = new ArrayList<Schedule>();
+
+		// the size of cycles list and the size of multiSplitInfo list are equal.
+		for (int i = 0; i < cycles.size(); i++) {
+			Cycle currentCycle = cycles.get(i);
+			MultiSplitInfo currentSplitInfo = info.get(i);
+			Schedule newSchedule = new Schedule("Multi Split Schedule");
+			Set<Integer> usedTransactions = new HashSet<Integer>();
+
+			int TPrimeIndex = currentSplitInfo.gettPrimeIndex();
+
+			// First Step: add all operations in the prefix parts.
+			for (int j = 0; j <= TPrimeIndex; j++) {
+				PrePostFix currentT = currentSplitInfo.getPrePostFix().get(j);
+				ArrayList<Operation> prefixTJ = currentT.getPrefix();
+				usedTransactions.add(currentT.gettId());
+				for (int k = 0; k < prefixTJ.size(); k++) {
+					newSchedule.AddOperation(prefixTJ.get(k), currentT.gettId());
+				}
+			}
+			// Second Step: add all closed transactions
+			for (int j = TPrimeIndex + 1; j < currentCycle.size(); j++) {
+				int Tid = currentCycle.getEdge(j).getT1ID();
+				int tIndex = getTransactionPosition(Tid, t);
+				Transaction currentT = t.get(tIndex);
+				usedTransactions.add(Tid);
+				// add all operations in the current transaction to the schedule
+				for (int k = 0; k < currentT.size(); k++) {
+					Operation op = currentT.getOperations().get(k);
+					newSchedule.AddOperation(op, Tid);
+				}
+			}
+			// Third Step: add all operations in the postfix parts
+			for (int j = 0; j <= TPrimeIndex; j++) {
+				PrePostFix currentT = currentSplitInfo.getPrePostFix().get(j);
+				ArrayList<Operation> postfixTJ = currentT.getPostfix();
+				for (int k = 0; k < postfixTJ.size(); k++) {
+					newSchedule.AddOperation(postfixTJ.get(k), currentT.gettId());
+				}
+			}
+			// Last Step: add the rest transactions
+			for (int j = 0; j < t.size(); j++) {
+				Transaction currentT = t.get(j);
+				if (usedTransactions.contains(currentT.getId()))
+					continue;
+				for (int k = 0; k < currentT.size(); k++) {
+					Operation op = currentT.getOperations().get(k);
+					newSchedule.AddOperation(op, currentT.getId());
+				}
+			}
+			result.add(newSchedule);
+		}
+		return result;
+	}
+
+	// ============================
 
 	public static void DecideIsolationLevel(ArrayList<Transaction> t) {
 		ArrayList<Edge> edges = getEdges(t);
 		ArrayList<Cycle> allCycles = getCycles(edges);
 
 		ArrayList<Cycle> NonTrivialCycles = getNonTrivialCycles(allCycles);
-		// get Prefix-Write Conflict-Free cycles.
-		ArrayList<Cycle> prefWConfFreeCycles = getPrefWConfFreeCycles(NonTrivialCycles, t);
+
+		// get Prefix-Write Conflict-Free cycles along with their split points.
+		CyclesAndPoints prefWriteCombined = getCyclesAndPoints(NonTrivialCycles, t);
+		ArrayList<SplitPoint> splitPoints = prefWriteCombined.getSplitPoints();
+		ArrayList<Cycle> prefWConfFreeCycles = prefWriteCombined.getCycles();
+		ArrayList<Schedule> splitSchedules = getSplitSchedules(prefWConfFreeCycles, splitPoints, t);
+
+		// get multi-prefix Conflict-Free cycles along with multi-spit information.
+		MPrefCyclesAndPoints multiPrefCombined = getMultiPrefCyclesAndPoints(NonTrivialCycles, t);
+		ArrayList<MultiSplitInfo> multiSplitInfo = multiPrefCombined.getSplitInfo();
+		ArrayList<Cycle> multiPrefCycles = multiPrefCombined.getMultiPrefCycles();
+		ArrayList<Schedule> multiSplitSchedules = getMultiSplitSchedules(multiPrefCycles, multiSplitInfo, t);
+
+		// ==================== Testing =====================
 
 		System.out.println("Number of Non-Trivial Cycles = " + NonTrivialCycles.size());
 		System.out.println("Number of Prefix-Write Conflict-Free Cycles = " + prefWConfFreeCycles.size());
+		System.out.println();
+
+		System.out.println("The Prefix-Write Conflict-Free Cycle");
+		prefWConfFreeCycles.get(0).print();
+
+		System.out.println("The Split Point is");
+		splitPoints.get(0).print(splitSchedules.get(0));
+
+		System.out.println();
+		for (int i = 0; i < splitSchedules.size(); i++) {
+			System.out.println("The Found Split Schedules Are:");
+			splitSchedules.get(i).print();
+		}
+
+		// ==================================================
 
 		if (NonTrivialCycles.isEmpty()) {
 			System.out.println("The given set of transactions is allowed under NO ISOLATION level");
 
 		} else if (prefWConfFreeCycles.isEmpty()) {
 			System.out.println("The given set of transactions is allowed under READ UNCOMMITTED level");
+		} else if (multiPrefCycles.isEmpty()) {
+			System.out.println("The given set of transactions is allowed under READ COMMITTED level");
 		}
 
 	}

@@ -25,13 +25,12 @@ public class Transaction {
 		String result = " "; // to combine all operations into this string
 		int size = operations.size();
 		for (int i = 0; i < size; i++) {
-			if (result != " ") // to add comma between operations
+			if (result != " ") // to add a comma between 2 operations
 				result += ", ";
 			Operation op = operations.get(i);
 			result += op.getType() + Integer.toString(getId()) + "[" + op.getObject() + "]" + " ";
 		}
-		System.out.println(String.format("%s%s%s%s%s%s", "T", getId(), " = ", "[", result, "]"));
-
+		System.out.println(String.format("%s%s%s%s%s%s%s%s", "T", getId(), " = ", "[", result, ", C", getId(), " ]"));
 	}
 
 	public int getId() {

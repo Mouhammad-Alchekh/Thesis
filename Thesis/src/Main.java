@@ -29,12 +29,12 @@ public class Main {
 
 		// ============= Getting the Edges using the First approach =============
 
-		ArrayList<Edge> edges = Tools.getEdges(transactions);
-		for (int i = 0; i < edges.size(); i++) {
-			Edge e = edges.get(i);
-			e.print();
-		}
-		System.out.println();
+//		ArrayList<Edge> edges = Tools.getEdges(transactions);
+//		for (int i = 0; i < edges.size(); i++) {
+//			Edge e = edges.get(i);
+//			e.print();
+//		}
+//		System.out.println();
 
 		// ============= Getting the Edges using the second approach =============
 
@@ -47,14 +47,14 @@ public class Main {
 
 		// ======================== Getting Cycles =============================
 
-		ArrayList<Cycle> cycles = Tools.getCycles(edges);
-		System.out.println("The Possible Cycles Are:");
-		for (int i = 0; i < cycles.size(); i++) {
-			int n = i + 1;
-			System.out.println("Cycle number " + n);
-			cycles.get(i).print();
-		}
-		System.out.println();
+//		ArrayList<Cycle> cycles = Tools.getCycles(edges);
+//		System.out.println("The Possible Cycles Are:");
+//		for (int i = 0; i < cycles.size(); i++) {
+//			int n = i + 1;
+//			System.out.println("Cycle number " + n);
+//			cycles.get(i).print();
+//		}
+//		System.out.println();
 
 		// ================== Testing getCycles() on another Example ==================
 		
@@ -87,6 +87,9 @@ public class Main {
 //		System.out.println();
 //
 //		ArrayList<Cycle> cycles2 = Tools.getCycles(test);
+		
+
+		
 //		System.out.println("The Possible Cycles Are:");
 //		for (int i = 0; i < cycles2.size(); i++) {
 //			int n = i + 1;
@@ -96,5 +99,8 @@ public class Main {
 		
 
 		Tools.DecideIsolationLevel(transactions);
+
+
+		
 	}
 }
