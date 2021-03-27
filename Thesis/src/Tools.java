@@ -642,7 +642,7 @@ public abstract class Tools {
 	// a specific index.
 	private static ArrayList<Operation> getprefixWriteOps(int index, Transaction t) {
 		ArrayList<Operation> result = new ArrayList<Operation>();
-		for (int k = 0; k < index; k++) {
+		for (int k = 0; k <= index; k++) {
 			if (t.getOperations().get(k).getType() == 'W')
 				result.add(t.getOperations().get(k));
 		}
@@ -1067,24 +1067,22 @@ public abstract class Tools {
 
 		// get Prefix-Write Conflict-Free cycles along with their split points.
 		CyclesAndPoints prefWriteCombined = getCyclesAndPoints(NonTrivialCycles, t);
-		// if no prefix-write cycle was found, try checking the Non-trivial cycles from
-		// the opposite direction.
-		if (prefWriteCombined.size() == 0) {
-			counterDirection(NonTrivialCycles);
-			prefWriteCombined = getCyclesAndPoints(NonTrivialCycles, t);
-		}
+		// we need also to check the Non-trivial cycles from the opposite direction.
+		counterDirection(NonTrivialCycles);
+		CyclesAndPoints prefWriteCombined2 = getCyclesAndPoints(NonTrivialCycles, t);
+		prefWriteCombined.append(prefWriteCombined2);
+
 		ArrayList<SplitPoint> splitPoints = prefWriteCombined.getSplitPoints();
 		ArrayList<Cycle> prefWConfFreeCycles = prefWriteCombined.getCycles();
 		ArrayList<Schedule> splitSchedules = getSplitSchedules(prefWConfFreeCycles, splitPoints, t);
 
 		// get multi-prefix Conflict-Free cycles along with multi-spit information.
 		MPrefCyclesAndPoints multiPrefCombined = getMultiPrefCyclesAndPoints(NonTrivialCycles, t);
-		// if no multi-prefix cycle was found, try checking the Non-trivial cycles from
-		// the opposite direction.
-		if (multiPrefCombined.size() == 0) {
-			counterDirection(NonTrivialCycles);
-			multiPrefCombined = getMultiPrefCyclesAndPoints(NonTrivialCycles, t);
-		}
+		// we need also to check the Non-trivial cycles from the opposite direction.
+		counterDirection(NonTrivialCycles);
+		MPrefCyclesAndPoints multiPrefCombined2 = getMultiPrefCyclesAndPoints(NonTrivialCycles, t);
+		multiPrefCombined.append(multiPrefCombined2);
+
 		ArrayList<MultiSplitInfo> multiSplitInfo = multiPrefCombined.getSplitInfo();
 		ArrayList<Cycle> multiPrefCycles = multiPrefCombined.getMultiPrefCycles();
 		ArrayList<Schedule> multiSplitSchedules = getMultiSplitSchedules(multiPrefCycles, multiSplitInfo, t);

@@ -58,7 +58,7 @@ public class Main {
 		System.out.println();
 		System.out.println();
 
-		Tools.DecideIsolationLevel(example2);
+		Tools.DecideIsolationLevel(example1);
 
 		// ================== Testing getCycles() on another Example ==================
 

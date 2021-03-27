@@ -29,5 +29,13 @@ public class CyclesAndPoints {
 	public int size() {
 		return cycles.size();
 	}
+	
+	// append another CyclesAndPoints object to this one.
+	public void append(CyclesAndPoints cp) {
+		for (int i = 0; i < cp.size(); i++) {
+			cycles.add(cp.getCycles().get(i));
+			splitPoints.add(cp.getSplitPoints().get(i));
+		}
+	}
 
 }

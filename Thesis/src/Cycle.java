@@ -10,11 +10,13 @@ public class Cycle {
 	}
 
 	public void addEdge(Edge e) {
-		cycle.addLast(e);
+		Edge newEdge = new Edge(e.getT1ID(), e.getOp1(), e.getT2ID(), e.getOp2(), e.getId());
+		cycle.addLast(newEdge);
 	}
 
 	public void addEdgeFront(Edge e) {
-		cycle.addFirst(e);
+		Edge newEdge = new Edge(e.getT1ID(), e.getOp1(), e.getT2ID(), e.getOp2(), e.getId());
+		cycle.addFirst(newEdge);
 	}
 
 	public void removeFirstEdge() {
@@ -33,10 +35,14 @@ public class Cycle {
 		return cycle.get(i);
 	}
 
-	// make this cycle a copy of a given cycle.
+	// copy a given cycle to this cycle.
 	public void copyCycle(Cycle c2) {
-		LinkedList<Edge> edges2 = c2.getCycle();
-		this.cycle.addAll(edges2);
+		for (int i = 0; i < c2.size(); i++) {
+			Edge e = c2.getEdge(i);
+			Edge newEdge = new Edge(e.getT1ID(), e.getOp1(), e.getT2ID(), e.getOp2(), e.getId());
+			this.cycle.add(newEdge);
+		}
+		
 	}
 
 	public void replace(int i, Edge e) {
@@ -44,7 +50,8 @@ public class Cycle {
 		// if the new edge is not of the same shape of the previous one
 		if (oldEdge.getT1ID() == e.getT2ID() && oldEdge.getT2ID() == e.getT1ID())
 			e.flip();
-		cycle.set(i, e);
+		Edge newEdge = new Edge(e.getT1ID(), e.getOp1(), e.getT2ID(), e.getOp2(), e.getId());
+		cycle.set(i, newEdge);
 	}
 
 	public LinkedList<Edge> getCycle() {
@@ -89,7 +96,7 @@ public class Cycle {
 	}
 
 	// This method reorder the seuqnce of the edges in the cycle list and make the
-	// given edge the first edge in this cycle.
+	// edge that is equal to the given edge the first edge in this cycle.
 	public void reorder(Edge e) {
 		int index = -1;
 		for (int i = 0; i < cycle.size(); i++) {
