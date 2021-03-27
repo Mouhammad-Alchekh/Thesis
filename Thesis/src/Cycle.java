@@ -1,4 +1,6 @@
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 
 public class Cycle {
 	private LinkedList<Edge> cycle;
@@ -31,6 +33,7 @@ public class Cycle {
 		return cycle.get(i);
 	}
 
+	// make this cycle a copy of a given cycle.
 	public void copyCycle(Cycle c2) {
 		LinkedList<Edge> edges2 = c2.getCycle();
 		this.cycle.addAll(edges2);
@@ -56,19 +59,25 @@ public class Cycle {
 		return cycle.size();
 	}
 
+	// check if a given cycle is equal to this cycle.
 	public boolean isEqual(Cycle c2) {
-
+		// store the IDs of the used edges in each cycle.
+		Set<Integer> firstIDs = new HashSet<Integer>();
+		Set<Integer> secondIDs = new HashSet<Integer>();
+		// if two cycles don't have the same size, they are not equal.
 		if (this.size() != c2.size())
 			return false;
 
 		for (int i = 0; i < cycle.size(); i++) {
-			Edge first = cycle.get(i);
-			Edge second = c2.getCycle().get(i);
-			if (first.getId() != second.getId())
-				return false;
+			firstIDs.add(cycle.get(i).getId());
+			secondIDs.add(c2.getEdge(i).getId());
 		}
+		// if two cycles use the same edges, they are equal.
+		firstIDs.removeAll(secondIDs);
+		if (firstIDs.size() == 0)
+			return true;
 
-		return true;
+		return false;
 	}
 
 	public void print() {
@@ -97,5 +106,20 @@ public class Cycle {
 			cycle.removeFirst();
 		}
 
+	}
+
+	// reorder the list of edges in this cycle so that the moveing direction in the
+	// cycle is the opposite direction now.
+	// Ex: T2 -> T3 -> T1 -> T2 will be changed to T2 -> T1 -> T3 -> T2
+	public void changeDirection() {
+		for (int i = 0; i < cycle.size(); i++) {
+			cycle.get(i).flip();
+		}
+		for (int i = 0; i < cycle.size() / 2; i++) {
+			Edge first = cycle.get(i);
+			Edge last = cycle.get(cycle.size() - 1 - i);
+			cycle.set(i, last);
+			cycle.set(cycle.size() - 1 - i, first);
+		}
 	}
 }

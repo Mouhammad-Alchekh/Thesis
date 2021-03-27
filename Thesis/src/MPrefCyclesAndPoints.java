@@ -25,4 +25,8 @@ public class MPrefCyclesAndPoints {
 		this.multiPrefCycles = multiPrefCycles;
 		this.splitInfo = splitInfo;
 	}
+	
+	public int size() {
+		return multiPrefCycles.size();
+	}
 }

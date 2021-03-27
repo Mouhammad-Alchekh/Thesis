@@ -395,6 +395,40 @@ public abstract class Tools {
 		}
 	}
 
+	// This method delted cycles that are constructed from interleaved cycles
+	// Ex: "T4" <-> T1 <-> T2 <-> T3 <-> "T4" <-> T7 <-> T6 <-> T5 <-> "T4"
+	private static void deleteInterleaved(ArrayList<Cycle> links) {
+		ArrayList<Integer> toBeDeleted = new ArrayList<Integer>();
+		boolean interleaved = false;
+
+		// first step: detect all interleaved cycles
+		for (int i = 0; i < links.size(); i++) {
+			Cycle currentCycle = links.get(i);
+
+			for (int j = 0; j < currentCycle.size() - 1; j++) {
+				int tId1 = currentCycle.getEdge(j).getT1ID();
+				for (int k = j + 1; k < currentCycle.size(); k++) {
+					int tId2 = currentCycle.getEdge(k).getT1ID();
+					// if a node is used more than once in a cycle, the cycle is interleaved.
+					if (tId1 == tId2) {
+						interleaved = true;
+						break;
+					}
+				}
+				if (interleaved) {
+					toBeDeleted.add(i);
+					interleaved = false;
+					break;
+				}
+			}
+		}
+		// second step: delete the found interleaved cycles
+		for (int i = toBeDeleted.size() - 1; i >= 0; i--) {
+			int index = toBeDeleted.get(i);
+			links.remove(index);
+		}
+	}
+
 	// This method detect if there is any cycle from a given list of links and
 	// return a list of found cycles.
 	private static ArrayList<Cycle> detectCycle(ArrayList<Cycle> links) {
@@ -526,7 +560,6 @@ public abstract class Tools {
 			 **/
 			detectBySimilar(result, currentEdge);
 		}
-
 		// do another iteration over the given set of edges to make sure that all tiny
 		// cycles are added.
 		ArrayList<Cycle> tinyCycles = getTinyCycles(edges);
@@ -534,6 +567,8 @@ public abstract class Tools {
 
 		// delete duplicate cycles
 		deleteDouble(result);
+		// delete interleaved cycles
+		deleteInterleaved(result);
 
 		return result;
 	}
@@ -803,7 +838,7 @@ public abstract class Tools {
 
 		ArrayList<PrePostFix> result = new ArrayList<PrePostFix>();
 
-		for (int i = 0; i < tPrimeIndex; i++) {
+		for (int i = 0; i <= tPrimeIndex; i++) {
 			int tId = c.getEdge(i).getT1ID();
 			int tIndex = getTransactionPosition(tId, t);
 			int splitPosition = MultiSplitIndices.get(i);
@@ -839,8 +874,8 @@ public abstract class Tools {
 	}
 
 	// This method checks if a cycle is a multi-prefix conflict-free cycle and
-	// return an object that contain information about that including the index of T
-	// prime and prefix & postfix of the transactions that can be oppened.
+	// return an object that contains information about that including the index of
+	// T prime and prefix & postfix of the transactions that can be oppened.
 	private static MultiSplitInfo checkConflict(Cycle c, ArrayList<Transaction> t) {
 		// at the begining get the furthest index of (T prime).
 		int tPrimeIndex = getInitialTPrimeIndex(c, t);
@@ -850,15 +885,15 @@ public abstract class Tools {
 		ArrayList<PrePostFix> prePostFix = getPrePostFix(c, tPrimeIndex, MultiSplitIndices, t);
 
 		boolean containsConflict = false;
-		boolean firstCondition = false;
-		boolean secondCondition = false;
-		boolean thirdCondition = false;
+		boolean breakFirstCondition = false;
+		boolean breakSecondCondition = false;
+		boolean breakThirdCondition = false;
 
 		// there is always a number k > 0 such that the first k transactions occurring
 		// in C are open. When tPrimeIndex = 0 , k = 1.
 		while (tPrimeIndex >= 0) {
 
-			for (int index = 0; index < tPrimeIndex; index++) {
+			for (int index = 0; index <= tPrimeIndex; index++) {
 				// for each prefix, get its write operations and check the three conditions.
 				int tId = prePostFix.get(index).gettId();
 				int splitIndex = prePostFix.get(index).getSplitIndex();
@@ -866,34 +901,45 @@ public abstract class Tools {
 				ArrayList<Operation> currentPrefixWriteOp = getprefixWriteOps(splitIndex, t.get(tIndex));
 
 				// check the first condition
-				for (int i = index + 1; i < tPrimeIndex; i++) {
+				for (int i = index + 1; i <= tPrimeIndex; i++) {
 					ArrayList<Operation> prefixJ = prePostFix.get(i).getPrefix();
-					if (containsConflict(currentPrefixWriteOp, prefixJ))
-						firstCondition = true;
+					if (containsConflict(currentPrefixWriteOp, prefixJ)) {
+						breakFirstCondition = true;
+						break;
+					}
 				}
 				// check the second condition.
-				for (int i = tPrimeIndex; i < c.size(); i++) {
+				for (int i = tPrimeIndex + 1; i < c.size(); i++) {
 					// get the each transaction that happens after T Prime
 					tId = c.getEdge(i).getT1ID();
 					tIndex = getTransactionPosition(tId, t);
 					Transaction tJ = t.get(tIndex);
-					if (containsConflict(currentPrefixWriteOp, tJ.getOperations()))
-						secondCondition = true;
+					if (containsConflict(currentPrefixWriteOp, tJ.getOperations())) {
+						breakSecondCondition = true;
+						break;
+					}
 				}
 				// check the third condition
 				for (int i = 0; i < index; i++) {
 					ArrayList<Operation> postfixJ = prePostFix.get(i).getPostfix();
-					if (containsConflict(currentPrefixWriteOp, postfixJ))
-						thirdCondition = true;
+					if (containsConflict(currentPrefixWriteOp, postfixJ)) {
+						breakThirdCondition = true;
+						break;
+					}
 				}
 				// If any of the three conditions was not satisfied, there is a conflict.
-				if (firstCondition || secondCondition || thirdCondition) {
+				if (breakFirstCondition || breakSecondCondition || breakThirdCondition) {
 					containsConflict = true;
 					break;
 				}
 			}
-			if (containsConflict)
+			// after checking the three conditions, if they are all satisfied and there is
+			// no conflict, the cycle is multi-prefix conflict-free. Stop checking and save
+			// the cycle.
+			if (!containsConflict)
 				break;
+			// if the three conditions are not satisfied, check again with another T Prime
+			// index.
 			tPrimeIndex--;
 		}
 		MultiSplitInfo multiSplitInfo = new MultiSplitInfo(containsConflict, tPrimeIndex, prePostFix);
@@ -905,7 +951,7 @@ public abstract class Tools {
 	private static MPrefCyclesAndPoints getMultiPrefCyclesAndPoints(ArrayList<Cycle> cycles, ArrayList<Transaction> t) {
 		ArrayList<Cycle> multiPrefCycles = new ArrayList<Cycle>();
 		ArrayList<MultiSplitInfo> multiSplitInfo = new ArrayList<MultiSplitInfo>();
-		boolean containsConflict = false;
+		boolean containsConflict = true;
 
 		for (int i = 0; i < cycles.size(); i++) {
 			// get each cycle and iterate over it
@@ -940,7 +986,7 @@ public abstract class Tools {
 					}
 				}
 			}
-			containsConflict = false;
+			containsConflict = true;
 		}
 		MPrefCyclesAndPoints result = new MPrefCyclesAndPoints(multiPrefCycles, multiSplitInfo);
 		return result;
@@ -1005,6 +1051,12 @@ public abstract class Tools {
 		return result;
 	}
 
+	// This method takes a list of cycles and change the direction of each cycle.
+	private static void counterDirection(ArrayList<Cycle> cycles) {
+		for (int i = 0; i < cycles.size(); i++) {
+			cycles.get(i).changeDirection();
+		}
+	}
 	// ============================
 
 	public static void DecideIsolationLevel(ArrayList<Transaction> t) {
@@ -1015,43 +1067,84 @@ public abstract class Tools {
 
 		// get Prefix-Write Conflict-Free cycles along with their split points.
 		CyclesAndPoints prefWriteCombined = getCyclesAndPoints(NonTrivialCycles, t);
+		// if no prefix-write cycle was found, try checking the Non-trivial cycles from
+		// the opposite direction.
+		if (prefWriteCombined.size() == 0) {
+			counterDirection(NonTrivialCycles);
+			prefWriteCombined = getCyclesAndPoints(NonTrivialCycles, t);
+		}
 		ArrayList<SplitPoint> splitPoints = prefWriteCombined.getSplitPoints();
 		ArrayList<Cycle> prefWConfFreeCycles = prefWriteCombined.getCycles();
 		ArrayList<Schedule> splitSchedules = getSplitSchedules(prefWConfFreeCycles, splitPoints, t);
 
 		// get multi-prefix Conflict-Free cycles along with multi-spit information.
 		MPrefCyclesAndPoints multiPrefCombined = getMultiPrefCyclesAndPoints(NonTrivialCycles, t);
+		// if no multi-prefix cycle was found, try checking the Non-trivial cycles from
+		// the opposite direction.
+		if (multiPrefCombined.size() == 0) {
+			counterDirection(NonTrivialCycles);
+			multiPrefCombined = getMultiPrefCyclesAndPoints(NonTrivialCycles, t);
+		}
 		ArrayList<MultiSplitInfo> multiSplitInfo = multiPrefCombined.getSplitInfo();
 		ArrayList<Cycle> multiPrefCycles = multiPrefCombined.getMultiPrefCycles();
 		ArrayList<Schedule> multiSplitSchedules = getMultiSplitSchedules(multiPrefCycles, multiSplitInfo, t);
 
-		// ==================== Testing =====================
-
+		// ====== Showing Results ======
 		System.out.println("Number of Non-Trivial Cycles = " + NonTrivialCycles.size());
 		System.out.println("Number of Prefix-Write Conflict-Free Cycles = " + prefWConfFreeCycles.size());
+		System.out.println("Number of Multi-Prefix Conflict-Free Cycles = " + multiPrefCycles.size());
 		System.out.println();
-
-		System.out.println("The Prefix-Write Conflict-Free Cycle");
-		prefWConfFreeCycles.get(0).print();
-
-		System.out.println("The Split Point is");
-		splitPoints.get(0).print(splitSchedules.get(0));
-
-		System.out.println();
-		for (int i = 0; i < splitSchedules.size(); i++) {
-			System.out.println("The Found Split Schedules Are:");
-			splitSchedules.get(i).print();
-		}
-
-		// ==================================================
 
 		if (NonTrivialCycles.isEmpty()) {
-			System.out.println("The given set of transactions is allowed under NO ISOLATION level");
+			System.out.println("<< The given set of transactions is ALLOWED under NO ISOLATION level >>");
+			System.out.println("==============================");
+			System.out.println();
+		} else {
+			System.out.println("<< The given set of transactions is NOT ALLOWED under NO ISOLATION level >>");
+			System.out.println("==============================");
+			System.out.println();
+		}
 
-		} else if (prefWConfFreeCycles.isEmpty()) {
-			System.out.println("The given set of transactions is allowed under READ UNCOMMITTED level");
-		} else if (multiPrefCycles.isEmpty()) {
-			System.out.println("The given set of transactions is allowed under READ COMMITTED level");
+		if (prefWConfFreeCycles.isEmpty()) {
+			System.out.println("<< The given set of transactions is ALLOWED under READ UNCOMMITTED level >>");
+			System.out.println("==============================");
+			System.out.println();
+		} else {
+			System.out.println("<< The given set of transactions is NOT ALLOWED under READ UNCOMMITTED level >>");
+			System.out.println();
+			System.out.println("The Prefix-Write Conflict-Free Cycles Are:");
+			for (int i = 0; i < prefWConfFreeCycles.size(); i++) {
+				System.out.println("--------------------");
+				prefWConfFreeCycles.get(i).print();
+				System.out.println("The Split Point for this Cycle is:");
+				splitPoints.get(i).print(splitSchedules.get(i));
+				System.out.println();
+				System.out.println("The Found Split Schedule for this Cycle is:");
+				splitSchedules.get(i).print();
+			}
+			System.out.println("==============================");
+			System.out.println();
+		}
+
+		if (multiPrefCycles.isEmpty()) {
+			System.out.println("<< The given set of transactions is ALLOWED under READ COMMITTED level >>");
+			System.out.println("==============================");
+			System.out.println();
+		} else {
+			System.out.println("<< The given set of transactions is NOT ALLOWED under READ COMMITTED level >>");
+			System.out.println();
+			System.out.println("The Multi-Prefix Conflict-Free Cycles Are:");
+			for (int i = 0; i < multiPrefCycles.size(); i++) {
+				System.out.println("--------------------");
+				multiPrefCycles.get(i).print();
+				System.out.println("The Split Points for this Cycle are:");
+				multiSplitInfo.get(i).printSplitPoints();
+				System.out.println();
+				System.out.println("The Found Multi-Split Schedule for this Cycle is:");
+				multiSplitSchedules.get(i).print();
+			}
+			System.out.println("==============================");
+			System.out.println();
 		}
 
 	}

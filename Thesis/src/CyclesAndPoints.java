@@ -25,5 +25,9 @@ public class CyclesAndPoints {
 	public void setSplitPoints(ArrayList<SplitPoint> splitPoints) {
 		this.splitPoints = splitPoints;
 	}
+	
+	public int size() {
+		return cycles.size();
+	}
 
 }

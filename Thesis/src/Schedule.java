@@ -42,7 +42,8 @@ public class Schedule {
 	public int size() {
 		return operations.size();
 	}
-	public void print() {
+
+	private void printSplitSchedule() {
 		// to combine all operations into this string
 		String result = " ";
 		boolean passSplitPoint = false;
@@ -69,6 +70,44 @@ public class Schedule {
 			}
 		}
 		System.out.println(String.format("%s%s%s%s%s", "S", " = ", "[", result, "]"));
+	}
+
+	private void printMultiSplitSchedule() {
+		// to combine all operations into this string
+		String result = " ";
+
+		// To store the positions of all comit operations in the schedule. for each item
+		// in this list, the index represents the transaction ID of the commit operation
+		// and the value represents the index of the last operation befor commiting.
+		ArrayList<Integer> commitPositions = new ArrayList<Integer>();
+		for (int i = 0; i < TransactionId.size(); i++) {
+			commitPositions.add(0);
+		}
+		for (int i = 0; i < TransactionId.size() - 1; i++) {
+			if (TransactionId.get(i) != TransactionId.get(i + 1))
+				commitPositions.set(TransactionId.get(i), i);
+		}
+		// The last commit will be after the last operation
+		commitPositions.set(TransactionId.get(TransactionId.size() - 1), TransactionId.size() - 1);
+
+		for (int i = 0; i < operations.size(); i++) {
+			if (result != " ")
+				result += ", ";
+			Operation op = operations.get(i);
+			int tId = TransactionId.get(i);
+			result += op.getType() + Integer.toString(tId) + "[" + op.getObject() + "]" + " ";
+
+			if (commitPositions.get(tId) == i)
+				result += ", C" + Integer.toString(tId) + " ";
+		}
+		System.out.println(String.format("%s%s%s%s%s", "S", " = ", "[", result, "]"));
+	}
+
+	public void print() {
+		if (this.type == "Split Schedule")
+			printSplitSchedule();
+		if (this.type == "Multi Split Schedule")
+			printMultiSplitSchedule();
 	}
 
 }
