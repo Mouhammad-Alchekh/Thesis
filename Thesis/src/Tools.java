@@ -179,10 +179,11 @@ public abstract class Tools {
 			for (int j = i + 1; j < t.size(); j++) {
 				temp = getEdges(t.get(i), t.get(j), edgeIdCounter);
 				// set the counter to be the id of the last edge from the previous list of edges
-				int last = temp.size() - 1;
-				edgeIdCounter = temp.get(last).getId();
-
-				result.addAll(temp);
+				if (temp.size() > 0) {
+					int last = temp.size() - 1;
+					edgeIdCounter = temp.get(last).getId();
+					result.addAll(temp);
+				}
 			}
 		}
 		return result;
