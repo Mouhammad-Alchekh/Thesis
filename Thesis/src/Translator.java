@@ -22,8 +22,8 @@ public abstract class Translator {
 			SQLiteParser sqlParser = new SQLiteParser(tokenStream);
 			
 			// Specify an entry point
-			SQLiteParser.ParseContext context = sqlParser.parse();
-//			SQLiteParser.Begin_stmtContext con2 = sqlParser.begin_stmt();
+//			SQLiteParser.ParseContext context = sqlParser.parse();
+			SQLiteParser.Transaction_nameContext context = sqlParser.transaction_name();
 			
 			// Create our custom Listener
 			Listener listener = new Listener();
