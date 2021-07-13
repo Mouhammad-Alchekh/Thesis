@@ -7,20 +7,31 @@ public class Transaction {
 	private int id;
 	// A transaction contains many operations
 	// Each operation is an object that has many characteristics
-	private ArrayList<Operation> operations = new ArrayList<Operation>(); // initially ArrayList. May be changed later.
-	private Set<Character> usedObjects = new HashSet<Character>(); // To store the used objects in this transaction.
+	private ArrayList<Operation> operations = new ArrayList<Operation>();
+	// To store the short string codes of the used objects in this transaction.
+	private Set<String> usedObjects = new HashSet<String>();
+	
 
 	public Transaction(int id) {
 		this.id = id;
 	}
 
-	public void AddOperation(int idO, char type, char obj) {
+	public void addOperation(int idO, char type, String obj) {
 		Operation op = new Operation(idO, type, obj);
 		operations.add(op);
 		// Ignore adding commit operation for the moment
 		usedObjects.add(obj);
 	}
+	
+	public void addOperation(int idO, char type, Obj obj) {
+		Operation op = new Operation(idO, type, obj);
+		operations.add(op);
+	}
 
+	public void addUsedObject(String obj) {
+		usedObjects.add(obj);
+	}
+	
 	public void Print() {
 		String result = " "; // to combine all operations into this string
 		int size = operations.size();
@@ -49,7 +60,7 @@ public class Transaction {
 		this.operations = operations;
 	}
 
-	public Set<Character> getUsedObjects() {
+	public Set<String> getUsedObjects() {
 		return usedObjects;
 	}
 

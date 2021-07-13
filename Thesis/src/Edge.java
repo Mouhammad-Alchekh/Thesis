@@ -59,8 +59,8 @@ public class Edge {
 	public void print() {
 		char type1 = op1.getType();
 		char type2 = op2.getType();
-		char obj1 = op1.getObject();
-		char obj2 = op1.getObject();
+		String obj1 = op1.getObject();
+		String obj2 = op1.getObject();
 
 		System.out.println(String.format("%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", "( ", "T", t1ID, " , ", type1,
 				t1ID, "[", obj1, "]", " , ", type2, t2ID, "[", obj2, "]", " , ", "T", t2ID, " )", "     ID = ", id));

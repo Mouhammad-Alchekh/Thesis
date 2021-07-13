@@ -44,6 +44,6 @@ public class Schema {
 			String att = attributes.get(i);
 			result += att;
 		}
-		System.out.println(String.format("%s%s%s%s%s%s", this.name, "(PK=", this.pKey, ",", result, ")"));
+		System.out.println(String.format("%s%s%s%s%s%s", this.name, " (PK=", this.pKey, ",", result, ")"));
 	}
 }

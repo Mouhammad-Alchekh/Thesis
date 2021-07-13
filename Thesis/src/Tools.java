@@ -9,7 +9,7 @@ public abstract class Tools {
 
 	// this method takes a set of objects and a list of operations and return only
 	// the operations that use objects from that set.
-	private static ArrayList<Operation> findOperations(ArrayList<Operation> operations, Set<Character> intersection) {
+	private static ArrayList<Operation> findOperations(ArrayList<Operation> operations, Set<String> intersection) {
 		ArrayList<Operation> group = new ArrayList<Operation>();
 		Operation temp;
 
@@ -25,8 +25,8 @@ public abstract class Tools {
 	// an overloaded version of the previous method.
 	// in this case it takes 2 set of objects and returns 2 wrapped lists as a
 	// DoubleList object.
-	private static DoubleList findOperations(ArrayList<Operation> operations, Set<Character> intersection1,
-			Set<Character> intersection2) {
+	private static DoubleList findOperations(ArrayList<Operation> operations, Set<String> intersection1,
+			Set<String> intersection2) {
 		ArrayList<Operation> group1 = new ArrayList<Operation>();
 		ArrayList<Operation> group2 = new ArrayList<Operation>();
 		Operation temp;
@@ -77,9 +77,9 @@ public abstract class Tools {
 
 		// create a new set and store a copy the set we get from a transaction inside it
 		// "To avoid unexpected errors".
-		Set<Character> set1 = new HashSet<Character>(t1.getUsedObjects());
-		Set<Character> set2 = new HashSet<Character>(t2.getUsedObjects());
-		Set<Character> intersection = new HashSet<Character>(t1.getUsedObjects());
+		Set<String> set1 = new HashSet<String>(t1.getUsedObjects());
+		Set<String> set2 = new HashSet<String>(t2.getUsedObjects());
+		Set<String> intersection = new HashSet<String>(t1.getUsedObjects());
 		// find the intersection between set1 and set2
 		intersection.retainAll(set2);
 
@@ -109,12 +109,12 @@ public abstract class Tools {
 		ArrayList<Edge> result = new ArrayList<Edge>();
 		int edgeIdCounter = 0;
 
-		Set<Character> set1 = new HashSet<Character>(t1.getUsedObjects());
-		Set<Character> set2 = new HashSet<Character>(t2.getUsedObjects());
-		Set<Character> set3 = new HashSet<Character>(t3.getUsedObjects());
-		Set<Character> intersection12 = new HashSet<Character>(t1.getUsedObjects());
-		Set<Character> intersection13 = new HashSet<Character>(t1.getUsedObjects());
-		Set<Character> intersection23 = new HashSet<Character>(t2.getUsedObjects());
+		Set<String> set1 = new HashSet<String>(t1.getUsedObjects());
+		Set<String> set2 = new HashSet<String>(t2.getUsedObjects());
+		Set<String> set3 = new HashSet<String>(t3.getUsedObjects());
+		Set<String> intersection12 = new HashSet<String>(t1.getUsedObjects());
+		Set<String> intersection13 = new HashSet<String>(t1.getUsedObjects());
+		Set<String> intersection23 = new HashSet<String>(t2.getUsedObjects());
 
 		intersection12.retainAll(set2); // set1 and set2
 		intersection13.retainAll(set3); // set1 and set3
@@ -396,7 +396,7 @@ public abstract class Tools {
 		}
 	}
 
-	// This method delted cycles that are constructed from interleaved cycles
+	// This method deletes cycles that are constructed from interleaved cycles
 	// Ex: "T4" <-> T1 <-> T2 <-> T3 <-> "T4" <-> T7 <-> T6 <-> T5 <-> "T4"
 	private static void deleteInterleaved(ArrayList<Cycle> links) {
 		ArrayList<Integer> toBeDeleted = new ArrayList<Integer>();

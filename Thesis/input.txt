@@ -1,17 +1,17 @@
-BEGIN TRANSACTION;
+BEGIN TRANSACTION T1;
 
-UPDATE accounts
-   SET balance = balance - 1000
- WHERE account_no = 100;
-
-UPDATE accounts
-   SET balance = balance + 1000
- WHERE account_no = 200;
+DELETE FROM branch;
  
-INSERT INTO account_changes(account_no,flag,amount,changed_at) 
-VALUES(100,'-',1000,datetime('now'));
+DELETE FROM client
+WHERE id = 5;
 
-INSERT INTO account_changes(account_no,flag,amount,changed_at) 
-VALUES(200,'+',1000,datetime('now'));
+DELETE FROM employee
+WHERE gender = 'Male' OR name = 'John' AND salary < 40000;
+
+
+DELETE FROM inventory
+WHERE EXISTS
+  ( SELECT * FROM main_inventory
+    WHERE main_inventory.id = inventory.id );
 
 COMMIT;
