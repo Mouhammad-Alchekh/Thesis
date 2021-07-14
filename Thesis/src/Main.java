@@ -92,26 +92,26 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
-ArrayList<Schema> schemas = new ArrayList<Schema>();
-		
+		ArrayList<Schema> schemas = new ArrayList<Schema>();
+
 		ArrayList<String> a1 = new ArrayList<String>();
 		a1.add("name");
 		a1.add("age");
 		a1.add("gender");
 		a1.add("salary");
 		Schema s1 = new Schema("Employee", "id", a1);
-		
+
 		ArrayList<String> a2 = new ArrayList<String>();
 		a2.add("name");
 		a2.add("phone");
 		a2.add("address");
 		Schema s2 = new Schema("Client", "id", a2);
-		
+
 		ArrayList<String> a3 = new ArrayList<String>();
 		a3.add("country");
 		a3.add("city");
 		Schema s3 = new Schema("Branch", "name", a3);
-		
+
 		ArrayList<String> a4 = new ArrayList<String>();
 		a4.add("count");
 		a4.add("price");
@@ -119,12 +119,12 @@ ArrayList<Schema> schemas = new ArrayList<Schema>();
 		a4.add("type");
 		a4.add("color");
 		Schema s4 = new Schema("Inventory", "id", a4);
-		
+
 		schemas.add(s1);
 		schemas.add(s2);
 		schemas.add(s3);
 		schemas.add(s4);
-		
+
 //		ArrayList<Schema> schemas = getSchemas();
 
 		ArrayList<Transaction> example = Translator.translate("./input.txt", schemas);
@@ -134,7 +134,7 @@ ArrayList<Schema> schemas = new ArrayList<Schema>();
 		printDetails(example, schemas);
 
 //		Tools.DecideIsolationLevel(example);
-		
+
 //		System.out.println("Done");
 
 	}

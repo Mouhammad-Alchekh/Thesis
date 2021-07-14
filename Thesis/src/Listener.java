@@ -10,10 +10,12 @@ public class Listener extends SQLiteParserBaseListener {
 	private boolean inSelect = false;
 	private boolean inInsert = false;
 	private boolean inDelete = false;
+	private boolean inUpdate = false;
 
 	// To store temporarly the collected information from each SQL statement.
 	private String tableName = "empty";
 	private ArrayList<String> usedColumn = new ArrayList<String>();
+	private ArrayList<String> usedColumn4Reading = new ArrayList<String>();
 	private boolean hasCondition = false;
 	private ArrayList<Expression> whereExpr = new ArrayList<Expression>();
 	private boolean hasSubSelect = false;
@@ -22,6 +24,11 @@ public class Listener extends SQLiteParserBaseListener {
 
 	private boolean afterFunctionExpr = false;
 	private boolean firstTableName = false;
+	private boolean inQualifiedTableName = false;
+	private boolean inSubSelect = false;
+	private boolean inExpression = false;
+	private boolean finishSetting = false;
+	String indication = "empty";
 
 	// transactions & operations ID counter.
 	private int tID = 1;
@@ -72,6 +79,7 @@ public class Listener extends SQLiteParserBaseListener {
 	private void resetAll() {
 		tableName = "empty";
 		usedColumn.clear();
+		usedColumn4Reading.clear();
 		hasCondition = false;
 		whereExpr.clear();
 		hasSubSelect = false;
@@ -79,6 +87,11 @@ public class Listener extends SQLiteParserBaseListener {
 		values.clear();
 		afterFunctionExpr = false;
 		firstTableName = false;
+		inQualifiedTableName = false;
+		inSubSelect = false;
+		inExpression = false;
+		finishSetting = false;
+		indication = "empty";
 	}
 
 	// =========================================================
@@ -110,9 +123,10 @@ public class Listener extends SQLiteParserBaseListener {
 	public void enterSelect_core(SQLiteParser.Select_coreContext ctx) {
 		if (inTransaction) {
 			// check if the insert or delete statement has a sub select statement.
-			if (inInsert || inDelete)
+			if (inInsert || inDelete || inUpdate) {
 				hasSubSelect = true;
-			else {
+				inSubSelect = true;
+			} else {
 				// switch the flag true only if the select statement belongs to a transaction.
 				inSelect = true;
 				// check if the select statment has a condition.
@@ -129,7 +143,10 @@ public class Listener extends SQLiteParserBaseListener {
 	// current transaction.
 	@Override
 	public void exitSelect_core(SQLiteParser.Select_coreContext ctx) {
-		if (inTransaction && !inInsert && !inDelete) {
+		if (inInsert || inDelete || inUpdate)
+			inSubSelect = false;
+
+		if (inTransaction && !inInsert && !inDelete && !inUpdate) {
 			inSelect = false;
 
 			// Get the current transaction, which is the last transaction in result list.
@@ -146,8 +163,8 @@ public class Listener extends SQLiteParserBaseListener {
 				currentObj.setTableSize(schemaSize);
 
 				// if the current object uses all columns, keep usedcolumns set empty "level 1".
-				// if the current object doesn't use all attributes in the table.
 				if (!usedColumn.contains("*") && usedColumn.size() < schemaSize - 1) {
+					// if the current object doesn't use all attributes in the table.
 					// add the used columns to the current object "level 2".
 					for (int i = 0; i < usedColumn.size(); i++)
 						currentObj.addColumn(usedColumn.get(i));
@@ -159,9 +176,8 @@ public class Listener extends SQLiteParserBaseListener {
 
 						for (int i = 0; i < whereExpr.size(); i++) {
 							String leftSide = whereExpr.get(i).getLeftExpr();
-							String oper = whereExpr.get(i).getOperation();
 							// get the expression that uses the primary key.
-							if ((leftSide.equalsIgnoreCase(PrimaryKey)) && (oper.equals("="))) {
+							if (leftSide.equalsIgnoreCase(PrimaryKey)) {
 								currentObj.setpKeyName(whereExpr.get(i).getLeftExpr());
 								currentObj.setpKeyValue(whereExpr.get(i).getRightExpr());
 								// if the object is level 3 object and uses all columns, make sure that the used
@@ -221,6 +237,7 @@ public class Listener extends SQLiteParserBaseListener {
 	public void exitInsert_stmt(SQLiteParser.Insert_stmtContext ctx) {
 		if (inTransaction) {
 			inInsert = false;
+
 			// Get the current transaction, which is the last transaction in result list.
 			Transaction t = result.get(result.size() - 1);
 			// get the table schema that this statment is using.
@@ -310,10 +327,9 @@ public class Listener extends SQLiteParserBaseListener {
 
 						for (int i = 0; i < whereExpr.size(); i++) {
 							String leftSide = whereExpr.get(i).getLeftExpr();
-							String oper = whereExpr.get(i).getOperation();
 
 							// get the expression that uses the primary key.
-							if ((leftSide.equalsIgnoreCase(PrimaryKey)) && (oper.equals("="))) {
+							if (leftSide.equalsIgnoreCase(PrimaryKey)) {
 								// And update the object to level 3 by setting the pKey name and value.
 								currentObj.setpKeyName(whereExpr.get(i).getLeftExpr());
 								currentObj.setpKeyValue(whereExpr.get(i).getRightExpr());
@@ -333,6 +349,106 @@ public class Listener extends SQLiteParserBaseListener {
 			resetAll();
 		}
 	}
+
+	@Override
+	public void enterUpdate_stmt(SQLiteParser.Update_stmtContext ctx) {
+		if (inTransaction) {
+			// switch the flag true only if the update statement belongs to a transaction.
+			inUpdate = true;
+
+			// check if the update statment has a condition.
+			for (int i = 0; i < ctx.getChildCount(); i++) {
+				if (ctx.getChild(i).getText().equalsIgnoreCase("where")) {
+					hasCondition = true;
+					// By using this indication, we can know if an expression belongs to the setting
+					// part "after SET and before WHERE" or not.
+					indication = ctx.getChild(i - 1).getText();
+				}
+			}
+		}
+	}
+
+	@Override
+	public void exitUpdate_stmt(SQLiteParser.Update_stmtContext ctx) {
+		if (inTransaction) {
+			inDelete = false;
+			// Get the current transaction, which is the last transaction in result list.
+			Transaction t = result.get(result.size() - 1);
+			// get the table schema that this statment is using.
+			Schema usedSchema = getMatchedSchema(tableName);
+
+			// The object cannot be created if the sql statment works on unknown schema.
+			if (usedSchema != null) {
+				
+				int schemaSize = usedSchema.getAttributes().size() + 1;
+				String PrimaryKey = usedSchema.getpKey();
+
+				// First we check if we have read columns to create a read operation.
+				if (usedColumn4Reading.size() != 0) {
+					Obj currentObj = new Obj(tableName);
+					currentObj.setTableSize(schemaSize);
+					// if the current object uses all columns, keep usedcolumns set empty "level 1".
+					if (usedColumn4Reading.size() < schemaSize - 1) {
+						// if the current object doesn't use all attributes in the table.
+						// add the used columns to the current object "level 2".
+						for (int i = 0; i < usedColumn4Reading.size(); i++)
+							currentObj.addColumn(usedColumn4Reading.get(i));
+					}
+					// check if the object can be a level 3 object.
+					if (hasCondition) {
+						// if the WHERE clause uses a primary key, update the object to level 3.
+						if (usePKey(PrimaryKey, whereExpr)) {
+							for (int i = 0; i < whereExpr.size(); i++) {
+								String leftSide = whereExpr.get(i).getLeftExpr();
+								// get the expression that uses the primary key.
+								if (leftSide.equalsIgnoreCase(PrimaryKey)) {
+									currentObj.setpKeyName(whereExpr.get(i).getLeftExpr());
+									currentObj.setpKeyValue(whereExpr.get(i).getRightExpr());
+									// if the object uses all columns, make sure to add these columns because it is
+									// a level 3 now "not level 1".
+									if (currentObj.getUsedColumns().size() == 0)
+										currentObj.addColumns(usedSchema.getAttributes());
+								}
+							}
+						}
+					}
+					t.addOperation(opID, 'R', currentObj);
+					opID++;
+				}
+
+				// Now we create the writing operation, which uses the same logic.
+				Obj currentObj = new Obj(tableName);
+				currentObj.setTableSize(schemaSize);
+				// check if it can be level 2.
+				if (!usedColumn.contains("*") && usedColumn.size() < schemaSize - 1 && !hasSubSelect) {
+					for (int i = 0; i < usedColumn.size(); i++)
+						currentObj.addColumn(usedColumn.get(i));
+				}
+				// check if it can be level 3.
+				if (hasCondition && !hasSubSelect) {
+					if (usePKey(PrimaryKey, whereExpr)) {
+						for (int i = 0; i < whereExpr.size(); i++) {
+							String leftSide = whereExpr.get(i).getLeftExpr();
+							// get the expression that uses the primary key.
+							if (leftSide.equalsIgnoreCase(PrimaryKey)) {
+								currentObj.setpKeyName(whereExpr.get(i).getLeftExpr());
+								currentObj.setpKeyValue(whereExpr.get(i).getRightExpr());
+								// if the object uses all columns, make sure to add these columns because it is
+								// a level 3 now "not level 1".
+								if (currentObj.getUsedColumns().size() == 0)
+									currentObj.addColumns(usedSchema.getAttributes());
+							}
+						}
+					}
+				}
+				t.addOperation(opID, 'W', currentObj);
+				opID++;
+			}
+			// reset the used variables.
+			resetAll();
+		}
+	}
+
 	// ============================================================================
 
 	// This method gets al coulmun names that a transaction-select-statement uses.
@@ -360,41 +476,36 @@ public class Listener extends SQLiteParserBaseListener {
 	public void enterExpr(SQLiteParser.ExprContext ctx) {
 		// The accepted expression after WHERE keyword should have 3 children and no sub
 		// select statement. Otherwise, it will not be useful to create level 3 object.
-		if (inSelect && hasCondition && ctx.getChildCount() == 3 && !hasSubSelect) {
-			// to skip the expressions that have parentheses.
-			boolean skip = false;
-			for (int i = 0; i < ctx.getChildCount(); i++) {
-				if (ctx.getChild(0).getText().equals("("))
-					skip = true;
-			}
-			if (!skip) {
-				if (ctx.getChild(1).getText().equals("OR") || ctx.getChild(1).getText().equals("AND")) {
-					// pass the expression if it is a composite expression.
-				} else {
-					whereExpr.add(new Expression(ctx.getChild(0).getText(), ctx.getChild(1).getText(),
-							ctx.getChild(2).getText()));
+		if (inSelect || inDelete || inUpdate) {
+			if (hasCondition && ctx.getChildCount() == 3 && !hasSubSelect) {
+				// if the expressions after WHERE are compined with "OR", we don't need these
+				// expressions because they will never lead to a single record even if one of
+				// them uses the primary key.
+//				boolean hasOR = false;
+
+				// to skip the expressions that have parentheses "Sub Statement".
+				boolean skip = false;
+				for (int i = 0; i < ctx.getChildCount(); i++) {
+					if (ctx.getChild(0).getText().equals("("))
+						skip = true;
+				}
+				if (!skip) {
+					if (ctx.getChild(1).getText().equals("OR") || ctx.getChild(1).getText().equals("AND")) {
+						// pass the expression if it is a composite expression.
+//						if (ctx.getChild(1).getText().equals("OR"))
+//							hasOR = true;
+					} else {
+						// Only expressions that use "=" are helpful for our cases.
+						if (ctx.getChild(1).getText().equals("="))
+							whereExpr.add(new Expression(ctx.getChild(0).getText(), ctx.getChild(1).getText(),
+									ctx.getChild(2).getText()));
+					}
 				}
 			}
 		}
 
-		// The accepted expression after WHERE keyword should have 3 children and no sub
-		// select statement. Otherwise, it will not be useful to create level 3 object.
-		if (inDelete && hasCondition && ctx.getChildCount() == 3 && !hasSubSelect) {
-			// to skip the expressions that have parentheses.
-			boolean skip = false;
-			for (int i = 0; i < ctx.getChildCount(); i++) {
-				if (ctx.getChild(0).getText().equals("("))
-					skip = true;
-			}
-			if (!skip) {
-				if (ctx.getChild(1).getText().equals("OR") || ctx.getChild(1).getText().equals("AND")) {
-					// pass the expression if it is a composite expression.
-				} else {
-					whereExpr.add(new Expression(ctx.getChild(0).getText(), ctx.getChild(1).getText(),
-							ctx.getChild(2).getText()));
-				}
-			}
-		}
+		if (inUpdate && !finishSetting)
+			inExpression = true;
 
 		// This is for insert statement to collect all inserted VALUES.
 		if (inInsert) {
@@ -405,6 +516,16 @@ public class Listener extends SQLiteParserBaseListener {
 		}
 	}
 
+	@Override
+	public void exitExpr(SQLiteParser.ExprContext ctx) {
+		if (inUpdate) {
+			if (ctx.getText().equalsIgnoreCase(indication))
+				finishSetting = true;
+
+			inExpression = false;
+		}
+	}
+
 	// This method gets the table name that insert statement uses.
 	@Override
 	public void enterTable_name(SQLiteParser.Table_nameContext ctx) {
@@ -412,14 +533,24 @@ public class Listener extends SQLiteParserBaseListener {
 			tableName = ctx.getText();
 			firstTableName = false;
 		}
+		if (inQualifiedTableName) {
+			tableName = ctx.getText();
+			inQualifiedTableName = false;
+		}
 
 	}
 
 	// This method gets al coulmun names that a insert statement uses.
 	@Override
 	public void enterColumn_name(SQLiteParser.Column_nameContext ctx) {
-		if (inInsert)
+		if (inInsert && !inSubSelect)
 			usedColumn.add(ctx.getText());
+
+		if (inUpdate && !finishSetting && !inExpression && !inSubSelect)
+			usedColumn.add(ctx.getText());
+
+		if (inUpdate && !finishSetting && inExpression && !inSubSelect)
+			usedColumn4Reading.add(ctx.getText());
 	}
 
 	// this method is needed to know if an expression belongs to a function or not.
@@ -433,7 +564,9 @@ public class Listener extends SQLiteParserBaseListener {
 	// This method gets the table name for the delete statement.
 	@Override
 	public void enterQualified_table_name(SQLiteParser.Qualified_table_nameContext ctx) {
-		if (inDelete)
-			tableName = ctx.getText();
+		if (inDelete || inUpdate)
+			// this flag is needed to extract only the table_name from the Qualified table
+			// name node. Because this node can have more info beside table_name.
+			inQualifiedTableName = true;
 	}
 }
