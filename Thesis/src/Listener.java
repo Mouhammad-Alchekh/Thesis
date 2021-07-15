@@ -22,6 +22,7 @@ public class Listener extends SQLiteParserBaseListener {
 	private int insertedRows = 0;
 	private ArrayList<String> values = new ArrayList<String>();
 
+	private boolean hasOR = false;
 	private boolean afterFunctionExpr = false;
 	private boolean firstTableName = false;
 	private boolean inQualifiedTableName = false;
@@ -85,6 +86,7 @@ public class Listener extends SQLiteParserBaseListener {
 		hasSubSelect = false;
 		insertedRows = 0;
 		values.clear();
+		hasOR = false;
 		afterFunctionExpr = false;
 		firstTableName = false;
 		inQualifiedTableName = false;
@@ -364,6 +366,8 @@ public class Listener extends SQLiteParserBaseListener {
 					// part "after SET and before WHERE" or not.
 					indication = ctx.getChild(i - 1).getText();
 				}
+				if (ctx.getChild(i).getText().equalsIgnoreCase("from"))
+					indication = ctx.getChild(i - 1).getText();
 			}
 		}
 	}
@@ -372,6 +376,7 @@ public class Listener extends SQLiteParserBaseListener {
 	public void exitUpdate_stmt(SQLiteParser.Update_stmtContext ctx) {
 		if (inTransaction) {
 			inDelete = false;
+
 			// Get the current transaction, which is the last transaction in result list.
 			Transaction t = result.get(result.size() - 1);
 			// get the table schema that this statment is using.
@@ -379,7 +384,7 @@ public class Listener extends SQLiteParserBaseListener {
 
 			// The object cannot be created if the sql statment works on unknown schema.
 			if (usedSchema != null) {
-				
+
 				int schemaSize = usedSchema.getAttributes().size() + 1;
 				String PrimaryKey = usedSchema.getpKey();
 
@@ -467,36 +472,32 @@ public class Listener extends SQLiteParserBaseListener {
 			tableName = ctx.getText();
 	}
 
-	// This method checks if the current visited expression is a WHERE expression.
-	// If so, it will check the type of the expression. If it is a composite
-	// expression, it will decompose it. Otherwise, it store the resultd expression
-	// in whereExpr list. Each expression consists of 3 variables for leftside,
-	// rightside and operation values.
+	// This method extract the different expressions in the statements.
 	@Override
 	public void enterExpr(SQLiteParser.ExprContext ctx) {
-		// The accepted expression after WHERE keyword should have 3 children and no sub
-		// select statement. Otherwise, it will not be useful to create level 3 object.
+		// This part checks if the current visited expression is a WHERE expression.
+		// If so, it will check the type of the expression. If it is a composite
+		// expression, it will decompose it. Otherwise, it store the resultd expression
+		// in whereExpr list. Each expression consists of 3 variables for leftside,
+		// rightside and operation values
 		if (inSelect || inDelete || inUpdate) {
-			if (hasCondition && ctx.getChildCount() == 3 && !hasSubSelect) {
-				// if the expressions after WHERE are compined with "OR", we don't need these
-				// expressions because they will never lead to a single record even if one of
-				// them uses the primary key.
-//				boolean hasOR = false;
+			// The accepted expression after WHERE keyword should have 3 children.
+			// Otherwise, it will not be useful to create level 3 object.
+			if (hasCondition && ctx.getChildCount() == 3) {
 
-				// to skip the expressions that have parentheses "Sub Statement".
-				boolean skip = false;
-				for (int i = 0; i < ctx.getChildCount(); i++) {
-					if (ctx.getChild(0).getText().equals("("))
-						skip = true;
-				}
-				if (!skip) {
+				// ignore the expressions that have parentheses "Sub Statement" or inside
+				// a sub select.
+				if (!ctx.getChild(0).getText().equals("(") && !inSubSelect) {
+					// pass the expression if it is a composite expression.
 					if (ctx.getChild(1).getText().equals("OR") || ctx.getChild(1).getText().equals("AND")) {
-						// pass the expression if it is a composite expression.
-//						if (ctx.getChild(1).getText().equals("OR"))
-//							hasOR = true;
+						// if the expressions after WHERE are compined with "OR", we don't need these
+						// expressions because they will never lead to a single record even if one of
+						// them uses the primary key.
+						if (ctx.getChild(1).getText().equals("OR"))
+							hasOR = true;
 					} else {
 						// Only expressions that use "=" are helpful for our cases.
-						if (ctx.getChild(1).getText().equals("="))
+						if (ctx.getChild(1).getText().equals("=") && !hasOR)
 							whereExpr.add(new Expression(ctx.getChild(0).getText(), ctx.getChild(1).getText(),
 									ctx.getChild(2).getText()));
 					}
@@ -507,7 +508,8 @@ public class Listener extends SQLiteParserBaseListener {
 		if (inUpdate && !finishSetting)
 			inExpression = true;
 
-		// This is for insert statement to collect all inserted VALUES.
+		// This is for insert statement to collect all inserted VALUES, which are
+		// expressions of lenght 1 or 4.
 		if (inInsert) {
 			if (afterFunctionExpr)
 				afterFunctionExpr = false;
@@ -526,7 +528,7 @@ public class Listener extends SQLiteParserBaseListener {
 		}
 	}
 
-	// This method gets the table name that insert statement uses.
+	// This method gets the table name that a statement uses.
 	@Override
 	public void enterTable_name(SQLiteParser.Table_nameContext ctx) {
 		if (inInsert && firstTableName) {
@@ -540,7 +542,7 @@ public class Listener extends SQLiteParserBaseListener {
 
 	}
 
-	// This method gets al coulmun names that a insert statement uses.
+	// This method gets al coulmun names that a statement uses.
 	@Override
 	public void enterColumn_name(SQLiteParser.Column_nameContext ctx) {
 		if (inInsert && !inSubSelect)
@@ -561,7 +563,7 @@ public class Listener extends SQLiteParserBaseListener {
 		}
 	}
 
-	// This method gets the table name for the delete statement.
+	// This method gets the table name of the delete or update statements.
 	@Override
 	public void enterQualified_table_name(SQLiteParser.Qualified_table_nameContext ctx) {
 		if (inDelete || inUpdate)

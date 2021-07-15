@@ -135,7 +135,7 @@ public class Main {
 
 		ArrayList<Schema> schemas = getSchemas();
 		
-//		ArrayList<Transaction> example = Translator.translate("./input.txt", schemas);
+		ArrayList<Transaction> example = Translator.translate("./input.txt", schemas);
 
 //		printTransactions(example);
 

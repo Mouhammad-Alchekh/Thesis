@@ -1,29 +1,5 @@
 BEGIN TRANSACTION T1;
 
-UPDATE employee As alies
-SET name = 'John',
-    age = 27
-WHERE id = 5;
 
-
-UPDATE inventory
-SET (product, price) = price - count,
-	count = count + 100
-WHERE id = 1;
-
-
-UPDATE branch
-SET country = 'Belgium';
-
-
-UPDATE schema.client 
-SET name = phone;
- 
- 
-UPDATE client
-SET address = (SELECT city
-            FROM branch 
-            WHERE country = 'Belgium')
-WHERE id > 10;
 
 COMMIT;
