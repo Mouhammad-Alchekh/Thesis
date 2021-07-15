@@ -85,8 +85,10 @@ public class Main {
 			for (int i = 2; i < tokens.size(); i++)
 				attributes.add(tokens.get(i));
 
-			Schema schema = new Schema(tokens.get(0), tokens.get(1), attributes);
-			result.add(schema);
+			if (!tokens.isEmpty()) {
+				Schema schema = new Schema(tokens.get(0), tokens.get(1), attributes);
+				result.add(schema);
+			}
 		}
 		myScanner.close();
 		return result;
