@@ -1,5 +1,8 @@
 import java.util.ArrayList;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.StringTokenizer;
 
 public class Main {
 
@@ -56,9 +59,44 @@ public class Main {
 		}
 	}
 
-	public static ArrayList<Schema> getSchemas() {
+	// This method gets the schemas automatically from a text file.
+	public static ArrayList<Schema> getSchemas() throws FileNotFoundException {
+		ArrayList<Schema> result = new ArrayList<Schema>();
+
+		// create a file opener to open the schema file.
+		File file = new File("./schema.txt");
+		// read the input by scanning the file.
+		Scanner myScanner = new Scanner(file);
+
+		while (myScanner.hasNextLine()) {
+			String line = myScanner.nextLine();
+			// replace() doesn't modify the old string. it creates a new one because String
+			// is Immutable.
+			line = line.replace('(', ' ');
+			line = line.replace(',', ' ');
+			line = line.replace(')', ' ');
+
+			ArrayList<String> tokens = new ArrayList<String>();
+			StringTokenizer st = new StringTokenizer(line, " ");
+			while (st.hasMoreTokens())
+				tokens.add(st.nextToken());
+
+			ArrayList<String> attributes = new ArrayList<String>();
+			for (int i = 2; i < tokens.size(); i++)
+				attributes.add(tokens.get(i));
+
+			Schema schema = new Schema(tokens.get(0), tokens.get(1), attributes);
+			result.add(schema);
+		}
+		myScanner.close();
+		return result;
+	}
+
+	// This method gets the schemas manually from the user.
+	public static ArrayList<Schema> getSchemas2() {
 		ArrayList<Schema> result = new ArrayList<Schema>();
 		boolean finish = false;
+		// read the input by scanning the console.
 		Scanner myScanner = new Scanner(System.in);
 
 		while (!finish) {
@@ -91,47 +129,15 @@ public class Main {
 		return result;
 	}
 
-	public static void main(String[] args) {
-		ArrayList<Schema> schemas = new ArrayList<Schema>();
+	public static void main(String[] args) throws FileNotFoundException {
 
-		ArrayList<String> a1 = new ArrayList<String>();
-		a1.add("name");
-		a1.add("age");
-		a1.add("gender");
-		a1.add("salary");
-		Schema s1 = new Schema("Employee", "id", a1);
+		ArrayList<Schema> schemas = getSchemas();
+		
+//		ArrayList<Transaction> example = Translator.translate("./input.txt", schemas);
 
-		ArrayList<String> a2 = new ArrayList<String>();
-		a2.add("name");
-		a2.add("phone");
-		a2.add("address");
-		Schema s2 = new Schema("Client", "id", a2);
+//		printTransactions(example);
 
-		ArrayList<String> a3 = new ArrayList<String>();
-		a3.add("country");
-		a3.add("city");
-		Schema s3 = new Schema("Branch", "name", a3);
-
-		ArrayList<String> a4 = new ArrayList<String>();
-		a4.add("count");
-		a4.add("price");
-		a4.add("product");
-		a4.add("type");
-		a4.add("color");
-		Schema s4 = new Schema("Inventory", "id", a4);
-
-		schemas.add(s1);
-		schemas.add(s2);
-		schemas.add(s3);
-		schemas.add(s4);
-
-//		ArrayList<Schema> schemas = getSchemas();
-
-		ArrayList<Transaction> example = Translator.translate("./input.txt", schemas);
-
-		printTransactions(example);
-
-		printDetails(example, schemas);
+//		printDetails(example, schemas);
 
 //		Tools.DecideIsolationLevel(example);
 
