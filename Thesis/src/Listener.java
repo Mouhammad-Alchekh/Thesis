@@ -14,14 +14,21 @@ public class Listener extends SQLiteParserBaseListener {
 
 	// To store temporarly the collected information from each SQL statement.
 	private String tableName = "empty";
+	private String subSelectTableName = "empty";
+	private String joinedTableName = "empty";
 	private ArrayList<String> usedColumn = new ArrayList<String>();
 	private ArrayList<String> usedColumn4Reading = new ArrayList<String>();
+	private ArrayList<String> joinedUsedColumn = new ArrayList<String>();
 	private boolean hasCondition = false;
+	private boolean hasJoin = false;
 	private ArrayList<Expression> whereExpr = new ArrayList<Expression>();
 	private boolean hasSubSelect = false;
 	private int insertedRows = 0;
 	private ArrayList<String> values = new ArrayList<String>();
 
+	private boolean inTableOrSubquery = false;
+	private boolean inJoin = false;
+	private boolean inResultColumn = false;
 	private boolean hasOR = false;
 	private boolean afterFunctionExpr = false;
 	private boolean firstTableName = false;
@@ -79,13 +86,20 @@ public class Listener extends SQLiteParserBaseListener {
 	// sql statements.
 	private void resetAll() {
 		tableName = "empty";
+		subSelectTableName = "empty";
+		joinedTableName = "empty";
 		usedColumn.clear();
 		usedColumn4Reading.clear();
+		joinedUsedColumn.clear();
 		hasCondition = false;
+		hasJoin = false;
 		whereExpr.clear();
 		hasSubSelect = false;
 		insertedRows = 0;
 		values.clear();
+		inTableOrSubquery = false;
+		inJoin = false;
+		inResultColumn = false;
 		hasOR = false;
 		afterFunctionExpr = false;
 		firstTableName = false;
@@ -125,7 +139,7 @@ public class Listener extends SQLiteParserBaseListener {
 	public void enterSelect_core(SQLiteParser.Select_coreContext ctx) {
 		if (inTransaction) {
 			// check if the insert or delete statement has a sub select statement.
-			if (inInsert || inDelete || inUpdate) {
+			if (inInsert || inDelete || inUpdate || inTableOrSubquery) {
 				hasSubSelect = true;
 				inSubSelect = true;
 			} else {
@@ -135,6 +149,8 @@ public class Listener extends SQLiteParserBaseListener {
 				for (int i = 0; i < ctx.getChildCount(); i++) {
 					if (ctx.getChild(i).getText().equalsIgnoreCase("where"))
 						hasCondition = true;
+					if (ctx.getChild(i).getText().contains("JOIN"))
+						hasJoin = true;
 				}
 			}
 		}
@@ -145,18 +161,39 @@ public class Listener extends SQLiteParserBaseListener {
 	// current transaction.
 	@Override
 	public void exitSelect_core(SQLiteParser.Select_coreContext ctx) {
-		if (inInsert || inDelete || inUpdate)
+		// To create an operation that represents the sub-select statement.
+		if (inSubSelect) {
 			inSubSelect = false;
-
-		if (inTransaction && !inInsert && !inDelete && !inUpdate) {
+			// Get the current transaction, which is the last transaction in result list.
+			Transaction t = result.get(result.size() - 1);
+			// get the table schema that this statement is using.
+			Schema usedSchema = getMatchedSchema(subSelectTableName);
+			// The object cannot be created if the sql statement works on unknown schema.
+			if (usedSchema != null) {
+				int schemaSize = usedSchema.getAttributes().size() + 1;
+				// create level 1 object because it is a SubSelect statement.
+				Obj currentObj = new Obj(subSelectTableName);
+				currentObj.setTableSize(schemaSize);
+				// Then, create the operation and add it to the transaction.
+				t.addOperation(opID, 'R', currentObj);
+				// increament the operation counter and reset the SubSelect table name.
+				opID++;
+				subSelectTableName = "empty";
+			}
+		}
+		// To create an operation that represents the main-select statement.
+		if (inTransaction && !inInsert && !inDelete && !inUpdate && !inTableOrSubquery) {
 			inSelect = false;
+
+			System.out.println("table name: " + tableName);
+			System.out.println();
 
 			// Get the current transaction, which is the last transaction in result list.
 			Transaction t = result.get(result.size() - 1);
-			// get the table schema that this statment is using.
+			// get the table schema that this statement is using.
 			Schema usedSchema = getMatchedSchema(tableName);
 
-			// The object cannot be created if the sql statment works on unknown schema.
+			// The object cannot be created if the sql statement works on unknown schema.
 			if (usedSchema != null) {
 				int schemaSize = usedSchema.getAttributes().size() + 1;
 				String PrimaryKey = usedSchema.getpKey();
@@ -198,6 +235,21 @@ public class Listener extends SQLiteParserBaseListener {
 				t.addOperation(opID, 'R', currentObj);
 				// increament the operation counter.
 				opID++;
+			}
+			// if the select statement has a join, create an aditional reading operation.
+			if (hasJoin) {
+				Schema usedSchema4Join = getMatchedSchema(joinedTableName);
+				if (usedSchema4Join != null) {
+					int schemaSize4Join = usedSchema4Join.getAttributes().size() + 1;
+					Obj object4Join = new Obj(joinedTableName);
+					object4Join.setTableSize(schemaSize4Join);
+					if (!joinedUsedColumn.contains("*") && joinedUsedColumn.size() < schemaSize4Join - 1) {
+						for (int i = 0; i < joinedUsedColumn.size(); i++)
+							object4Join.addColumn(joinedUsedColumn.get(i));
+					}
+					t.addOperation(opID, 'R', object4Join);
+					opID++;
+				}
 			}
 			// reset the used variables.
 			resetAll();
@@ -456,20 +508,34 @@ public class Listener extends SQLiteParserBaseListener {
 
 	// ============================================================================
 
-	// This method gets al coulmun names that a transaction-select-statement uses.
-	// And store these column names inside the usedColumn list.
+	// This method helps getting coulmun names and table names that a
+	// select statement uses.
 	@Override
 	public void enterResult_column(SQLiteParser.Result_columnContext ctx) {
 		if (inSelect)
-			usedColumn.add(ctx.getText());
+			inResultColumn = true;
 	}
 
-	// This methode gets the table name that the current select statement reads from
-	// and stores this name in the tableName variable.
+	@Override
+	public void exitResult_column(SQLiteParser.Result_columnContext ctx) {
+		if (inSelect)
+			inResultColumn = false;
+	}
+
+	// This methode helps getting the table name that the current select statement,
+	// which has no join, reads from.
 	@Override
 	public void enterTable_or_subquery(SQLiteParser.Table_or_subqueryContext ctx) {
-		if (inSelect)
-			tableName = ctx.getText();
+		if (inSelect && !inSubSelect && !hasJoin)
+			inTableOrSubquery = true;
+		if (inSubSelect)
+			subSelectTableName = ctx.getText();
+	}
+
+	@Override
+	public void exitTable_or_subquery(SQLiteParser.Table_or_subqueryContext ctx) {
+		if (inSelect && !inSubSelect && !hasJoin)
+			inTableOrSubquery = false;
 	}
 
 	// This method extract the different expressions in the statements.
@@ -487,7 +553,7 @@ public class Listener extends SQLiteParserBaseListener {
 
 				// ignore the expressions that have parentheses "Sub Statement" or inside
 				// a sub select.
-				if (!ctx.getChild(0).getText().equals("(") && !inSubSelect) {
+				if (!ctx.getChild(0).getText().equals("(") && !inSubSelect && !inJoin) {
 					// pass the expression if it is a composite expression.
 					if (ctx.getChild(1).getText().equals("OR") || ctx.getChild(1).getText().equals("AND")) {
 						// if the expressions after WHERE are compined with "OR", we don't need these
@@ -531,28 +597,76 @@ public class Listener extends SQLiteParserBaseListener {
 	// This method gets the table name that a statement uses.
 	@Override
 	public void enterTable_name(SQLiteParser.Table_nameContext ctx) {
+		// To get the table name for a select statement whether it is directly written
+		// after the keyword FROM or inferred from a sub-query after the keyword FROM.
+		if (inSelect && inTableOrSubquery)
+			tableName = ctx.getText();
+
+		// To get the table name of the main table that is joined with another select.
+		if (inSelect && inResultColumn && hasJoin && tableName.equalsIgnoreCase("empty"))
+			tableName = ctx.getText();
+		// To get the table name of the joined table.
+		if (inSelect && inResultColumn && hasJoin && !tableName.equalsIgnoreCase("empty")
+				&& joinedTableName.equalsIgnoreCase("empty")) {
+			if (!ctx.getText().equalsIgnoreCase(tableName))
+				joinedTableName = ctx.getText();
+		}
+		// To get the table name of the insert statement.
 		if (inInsert && firstTableName) {
 			tableName = ctx.getText();
 			firstTableName = false;
 		}
+		// To get the table name of the delete or update statements.
 		if (inQualifiedTableName) {
 			tableName = ctx.getText();
 			inQualifiedTableName = false;
 		}
-
 	}
 
 	// This method gets al coulmun names that a statement uses.
 	@Override
 	public void enterColumn_name(SQLiteParser.Column_nameContext ctx) {
+		// To collect the used columns in select statement that has no join.
+		if (inSelect && inResultColumn && !hasJoin)
+			usedColumn.add(ctx.getText());
+
+		// To collect the used columns in the main table & joined table in a select
+		// statement that has join.
+		if (inSelect && hasJoin) {
+			// column_name node in a select statement that has join will always belongs to a
+			// parent that has 3 childern.
+			if (ctx.getParent().getChild(0).getText().equalsIgnoreCase(tableName)) {
+				if (!usedColumn.contains(ctx.getText()))
+					usedColumn.add(ctx.getText());
+			}
+			if (ctx.getParent().getChild(0).getText().equalsIgnoreCase(joinedTableName)) {
+				if (!joinedUsedColumn.contains(ctx.getText()))
+					joinedUsedColumn.add(ctx.getText());
+			}
+		}
+
+		// To collect the used columns in insert statement.
 		if (inInsert && !inSubSelect)
 			usedColumn.add(ctx.getText());
 
+		// To collect the used columns for writing operation in update statement.
 		if (inUpdate && !finishSetting && !inExpression && !inSubSelect)
 			usedColumn.add(ctx.getText());
-
+		// To collect the used columns for reading operation in update statement.
 		if (inUpdate && !finishSetting && inExpression && !inSubSelect)
 			usedColumn4Reading.add(ctx.getText());
+	}
+
+	@Override
+	public void enterJoin_clause(SQLiteParser.Join_clauseContext ctx) {
+		if (inSelect)
+			inJoin = true;
+	}
+
+	@Override
+	public void exitJoin_clause(SQLiteParser.Join_clauseContext ctx) {
+		if (inSelect)
+			inJoin = false;
 	}
 
 	// this method is needed to know if an expression belongs to a function or not.

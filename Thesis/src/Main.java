@@ -137,9 +137,9 @@ public class Main {
 		
 		ArrayList<Transaction> example = Translator.translate("./input.txt", schemas);
 
-//		printTransactions(example);
+		printTransactions(example);
 
-//		printDetails(example, schemas);
+		printDetails(example, schemas);
 
 //		Tools.DecideIsolationLevel(example);
 
