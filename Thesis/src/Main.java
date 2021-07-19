@@ -57,7 +57,7 @@ public class Main implements ActionListener {
 	public static String getTransactions2Print(ArrayList<Transaction> t) {
 		String result = "";
 
-		result += "----------------------------------- \n";
+		result += "--------------------------------------------- \n";
 		result += "The used set of transactions is: \n";
 		result += " \n";
 		if (t.size() == 0) {
@@ -68,7 +68,7 @@ public class Main implements ActionListener {
 			result += t.get(i).getTransaction2Print();
 		}
 		result += " \n";
-		result += "----------------------------------- \n";
+		result += "--------------------------------------------- \n";
 
 		return result;
 	}
@@ -126,7 +126,7 @@ public class Main implements ActionListener {
 		result += " \n";
 		result += "The used set of transactions is: \n";
 		result += " \n";
-		result += "====================== \n";
+		result += "========================= \n";
 		if (t.size() == 0)
 			result += "The set of transaction is empty \n";
 
@@ -151,7 +151,7 @@ public class Main implements ActionListener {
 				result += op.getObj().getObj2Print();
 				result += " \n";
 			}
-			result += "====================== \n";
+			result += "======================== \n";
 		}
 		return result;
 	}
@@ -234,7 +234,7 @@ public class Main implements ActionListener {
 			ArrayList<Transaction> example = Translator.translate("./input.txt", schemas);
 
 			if (example.isEmpty())
-				System.out.println("Empty Or Wrong Input!");
+				System.out.println("Empty Or Wrong Input !");
 			else {
 				printTransactions(example);
 				printDetails(example, schemas);
@@ -267,6 +267,7 @@ public class Main implements ActionListener {
 
 		sqlText = new JTextArea();
 		sqlText.setMargin(new Insets(10, 10, 10, 10));
+		sqlText.setFont(new Font("Consolas", Font.BOLD, 13));
 		sqlText.setBackground(new Color(210, 210, 210));
 		scroll = new JScrollPane(sqlText, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -277,6 +278,8 @@ public class Main implements ActionListener {
 
 		schemas = new JTextArea();
 		schemas.setMargin(new Insets(10, 10, 10, 10));
+		schemas.setFont(new Font("Calibri", Font.BOLD, 14));
+		schemas.setForeground(new Color(160, 0, 0));
 		schemas.setBackground(new Color(210, 210, 210));
 		scroll2 = new JScrollPane(schemas, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -285,6 +288,7 @@ public class Main implements ActionListener {
 
 		output = new JTextArea();
 		output.setMargin(new Insets(10, 10, 10, 10));
+		output.setFont(new Font("Arial", Font.BOLD, 12));
 		output.setBackground(new Color(210, 210, 210));
 		scroll3 = new JScrollPane(output, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -391,7 +395,7 @@ public class Main implements ActionListener {
 			ArrayList<Schema> schemas = getSchemas();
 			ArrayList<Transaction> example = Translator.translate("./input.txt", schemas);
 			if (example.isEmpty())
-				result += "Empty Or Wrong Input!";
+				result += "Empty Or Wrong Input !";
 			else {
 				if (printTransactions.isSelected())
 					result += getTransactions2Print(example);

@@ -1158,7 +1158,7 @@ public abstract class Tools {
 	public static String DecideIsolationLevel2(ArrayList<Transaction> t) {
 		String result = "\nDecide Isolation Level Result: \n";
 		result += " \n";
-		result += "=================================== \n";
+		result += "====================================== \n";
 
 		ArrayList<Edge> edges = getEdges(t);
 		ArrayList<Cycle> allCycles = getCycles(edges);
@@ -1196,17 +1196,17 @@ public abstract class Tools {
 
 		if (NonTrivialCycles.isEmpty()) {
 			result += "<< The given set of transactions is ALLOWED under NO ISOLATION level >> \n";
-			result += "================================================================= \n";
+			result += "====================================================================== \n";
 			result += " \n";
 		} else {
 			result += "<< The given set of transactions is NOT ALLOWED under NO ISOLATION level >> \n";
-			result += "================================================================= \n";
+			result += "====================================================================== \n";
 			result += " \n";
 		}
 
 		if (prefWConfFreeCycles.isEmpty()) {
 			result += "<< The given set of transactions is ALLOWED under READ UNCOMMITTED level >> \n";
-			result += "================================================================= \n";
+			result += "====================================================================== \n";
 			result += " \n";
 		} else {
 			result += "<< The given set of transactions is NOT ALLOWED under READ UNCOMMITTED level >> \n";
@@ -1222,13 +1222,13 @@ public abstract class Tools {
 				result += "The Found Split Schedule for this Cycle is: \n";
 				result += splitSchedules.get(i).getSchedule2Print();
 			}
-			result += "================================================================= \n";
+			result += "====================================================================== \n";
 			result += " \n";
 		}
 
 		if (multiPrefCycles.isEmpty()) {
 			result += "<< The given set of transactions is ALLOWED under READ COMMITTED level >> \n";
-			result += "================================================================= \n";
+			result += "====================================================================== \n";
 			result += " \n";
 		} else {
 			result += "<< The given set of transactions is NOT ALLOWED under READ COMMITTED level >> \n";
@@ -1245,7 +1245,7 @@ public abstract class Tools {
 				result += multiSplitSchedules.get(i).getSchedule2Print();
 
 			}
-			result += "================================================================= \n";
+			result += "====================================================================== \n";
 			result += " \n";
 		}
 		return result;
