@@ -46,4 +46,18 @@ public class Schema {
 		}
 		System.out.println(String.format("%s%s%s%s%s%s", this.name, " (PK=", this.pKey, ",", result, ")"));
 	}
+	
+	// To get the schema as a string for printing.
+	public String getSchema2Print() {
+		String result = " "; // to combine all operations into this string
+		int size = this.attributes.size();
+		for (int i = 0; i < size; i++) {
+			if (result != " ") // to add a comma between 2 operations
+				result += ", ";
+			String att = attributes.get(i);
+			result += att;
+		}
+		result = this.name + " (PK=" + this.pKey + "," + result + ") \n";
+		return result;
+	}
 }

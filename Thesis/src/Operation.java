@@ -57,6 +57,13 @@ public class Operation {
 		System.out.println(String.format("%s%s%s%s", type, "[", object, "]"));
 	}
 	
+	// To get the operation as a string for printing.
+	public String getOperation2Print() {
+		// to combine all components into this string
+		String result = type + "[" + object + "] \n";
+		return result;
+	}
+	
 	// check if a given operation is different.
 	public boolean isDifferent(Operation op2) {
 		boolean result = true;

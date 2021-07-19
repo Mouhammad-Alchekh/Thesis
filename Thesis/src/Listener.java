@@ -185,9 +185,6 @@ public class Listener extends SQLiteParserBaseListener {
 		if (inTransaction && !inInsert && !inDelete && !inUpdate && !inTableOrSubquery) {
 			inSelect = false;
 
-			System.out.println("table name: " + tableName);
-			System.out.println();
-
 			// Get the current transaction, which is the last transaction in result list.
 			Transaction t = result.get(result.size() - 1);
 			// get the table schema that this statement is using.

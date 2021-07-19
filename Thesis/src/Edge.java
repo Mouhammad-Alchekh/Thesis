@@ -66,6 +66,21 @@ public class Edge {
 				t1ID, "[", obj1, "]", " , ", type2, t2ID, "[", obj2, "]", " , ", "T", t2ID, " )", "     ID = ", id));
 	}
 
+	// To get the edge as a string for printing.
+	public String getEdge2Print() {
+		char type1 = op1.getType();
+		char type2 = op2.getType();
+		String obj1 = op1.getObject();
+		String obj2 = op1.getObject();
+
+		// to combine all operations into this string
+		String result = "( " + "T" + Integer.toString(t1ID) + " , " + type1 + Integer.toString(t1ID) + "[" + obj1 + "]"
+				+ " , " + type2 + Integer.toString(t2ID) + "[" + obj2 + "]" + " , " + "T" + Integer.toString(t2ID)
+				+ " )" + "     ID = " + Integer.toString(id) + " \n";
+
+		return result;
+	}
+
 	public void flip() {
 		int temp1 = this.t1ID;
 		Operation temp2 = this.op1;

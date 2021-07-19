@@ -1060,6 +1060,7 @@ public abstract class Tools {
 	}
 	// ============================
 
+	// This version will print the results directly on the console.
 	public static void DecideIsolationLevel(ArrayList<Transaction> t) {
 		ArrayList<Edge> edges = getEdges(t);
 		ArrayList<Cycle> allCycles = getCycles(edges);
@@ -1089,6 +1090,10 @@ public abstract class Tools {
 		ArrayList<Schedule> multiSplitSchedules = getMultiSplitSchedules(multiPrefCycles, multiSplitInfo, t);
 
 		// ====== Showing Results ======
+		System.out.println();
+		System.out.println("Decide Isolation Level Result:");
+		System.out.println();
+		System.out.println("============================");
 		System.out.println("Number of Non-Trivial Cycles = " + NonTrivialCycles.size());
 		System.out.println("Number of Prefix-Write Conflict-Free Cycles = " + prefWConfFreeCycles.size());
 		System.out.println("Number of Multi-Prefix Conflict-Free Cycles = " + multiPrefCycles.size());
@@ -1096,17 +1101,17 @@ public abstract class Tools {
 
 		if (NonTrivialCycles.isEmpty()) {
 			System.out.println("<< The given set of transactions is ALLOWED under NO ISOLATION level >>");
-			System.out.println("==============================");
+			System.out.println("===============================================================================");
 			System.out.println();
 		} else {
 			System.out.println("<< The given set of transactions is NOT ALLOWED under NO ISOLATION level >>");
-			System.out.println("==============================");
+			System.out.println("===============================================================================");
 			System.out.println();
 		}
 
 		if (prefWConfFreeCycles.isEmpty()) {
 			System.out.println("<< The given set of transactions is ALLOWED under READ UNCOMMITTED level >>");
-			System.out.println("==============================");
+			System.out.println("===============================================================================");
 			System.out.println();
 		} else {
 			System.out.println("<< The given set of transactions is NOT ALLOWED under READ UNCOMMITTED level >>");
@@ -1114,6 +1119,7 @@ public abstract class Tools {
 			System.out.println("The Prefix-Write Conflict-Free Cycles Are:");
 			for (int i = 0; i < prefWConfFreeCycles.size(); i++) {
 				System.out.println("--------------------");
+				System.out.println("Cycle number: " + Integer.toString(i + 1));
 				prefWConfFreeCycles.get(i).print();
 				System.out.println("The Split Point for this Cycle is:");
 				splitPoints.get(i).print(splitSchedules.get(i));
@@ -1121,13 +1127,13 @@ public abstract class Tools {
 				System.out.println("The Found Split Schedule for this Cycle is:");
 				splitSchedules.get(i).print();
 			}
-			System.out.println("==============================");
+			System.out.println("===============================================================================");
 			System.out.println();
 		}
 
 		if (multiPrefCycles.isEmpty()) {
 			System.out.println("<< The given set of transactions is ALLOWED under READ COMMITTED level >>");
-			System.out.println("==============================");
+			System.out.println("===============================================================================");
 			System.out.println();
 		} else {
 			System.out.println("<< The given set of transactions is NOT ALLOWED under READ COMMITTED level >>");
@@ -1135,6 +1141,7 @@ public abstract class Tools {
 			System.out.println("The Multi-Prefix Conflict-Free Cycles Are:");
 			for (int i = 0; i < multiPrefCycles.size(); i++) {
 				System.out.println("--------------------");
+				System.out.println("Cycle number: " + Integer.toString(i + 1));
 				multiPrefCycles.get(i).print();
 				System.out.println("The Split Points for this Cycle are:");
 				multiSplitInfo.get(i).printSplitPoints();
@@ -1142,9 +1149,106 @@ public abstract class Tools {
 				System.out.println("The Found Multi-Split Schedule for this Cycle is:");
 				multiSplitSchedules.get(i).print();
 			}
-			System.out.println("==============================");
+			System.out.println("===============================================================================");
 			System.out.println();
 		}
-
 	}
+
+	// This version will return the results as a single string.
+	public static String DecideIsolationLevel2(ArrayList<Transaction> t) {
+		String result = "\nDecide Isolation Level Result: \n";
+		result += " \n";
+		result += "=================================== \n";
+
+		ArrayList<Edge> edges = getEdges(t);
+		ArrayList<Cycle> allCycles = getCycles(edges);
+
+		ArrayList<Cycle> NonTrivialCycles = getNonTrivialCycles(allCycles);
+
+		// get Prefix-Write Conflict-Free cycles along with their split points.
+		CyclesAndPoints prefWriteCombined = getCyclesAndPoints(NonTrivialCycles, t);
+		// we need also to check the Non-trivial cycles from the opposite direction.
+		counterDirection(NonTrivialCycles);
+		CyclesAndPoints prefWriteCombined2 = getCyclesAndPoints(NonTrivialCycles, t);
+		prefWriteCombined.append(prefWriteCombined2);
+
+		ArrayList<SplitPoint> splitPoints = prefWriteCombined.getSplitPoints();
+		ArrayList<Cycle> prefWConfFreeCycles = prefWriteCombined.getCycles();
+		ArrayList<Schedule> splitSchedules = getSplitSchedules(prefWConfFreeCycles, splitPoints, t);
+
+		// get multi-prefix Conflict-Free cycles along with multi-spit information.
+		MPrefCyclesAndPoints multiPrefCombined = getMultiPrefCyclesAndPoints(NonTrivialCycles, t);
+		// we need also to check the Non-trivial cycles from the opposite direction.
+		counterDirection(NonTrivialCycles);
+		MPrefCyclesAndPoints multiPrefCombined2 = getMultiPrefCyclesAndPoints(NonTrivialCycles, t);
+		multiPrefCombined.append(multiPrefCombined2);
+
+		ArrayList<MultiSplitInfo> multiSplitInfo = multiPrefCombined.getSplitInfo();
+		ArrayList<Cycle> multiPrefCycles = multiPrefCombined.getMultiPrefCycles();
+		ArrayList<Schedule> multiSplitSchedules = getMultiSplitSchedules(multiPrefCycles, multiSplitInfo, t);
+
+		// ====== Showing Results ======
+		result += "Number of Non-Trivial Cycles = " + Integer.toString(NonTrivialCycles.size()) + " \n";
+		result += "Number of Prefix-Write Conflict-Free Cycles = " + Integer.toString(prefWConfFreeCycles.size())
+				+ " \n";
+		result += "Number of Multi-Prefix Conflict-Free Cycles = " + Integer.toString(multiPrefCycles.size()) + " \n";
+		result += " \n";
+
+		if (NonTrivialCycles.isEmpty()) {
+			result += "<< The given set of transactions is ALLOWED under NO ISOLATION level >> \n";
+			result += "================================================================= \n";
+			result += " \n";
+		} else {
+			result += "<< The given set of transactions is NOT ALLOWED under NO ISOLATION level >> \n";
+			result += "================================================================= \n";
+			result += " \n";
+		}
+
+		if (prefWConfFreeCycles.isEmpty()) {
+			result += "<< The given set of transactions is ALLOWED under READ UNCOMMITTED level >> \n";
+			result += "================================================================= \n";
+			result += " \n";
+		} else {
+			result += "<< The given set of transactions is NOT ALLOWED under READ UNCOMMITTED level >> \n";
+			result += " \n";
+			result += "The Prefix-Write Conflict-Free Cycles Are: \n";
+			for (int i = 0; i < prefWConfFreeCycles.size(); i++) {
+				result += "-------------------- \n";
+				result += "Cycle number: " + Integer.toString(i + 1) + " \n";
+				result += prefWConfFreeCycles.get(i).getCycle2Print();
+				result += "The Split Point for this Cycle is: \n";
+				result += splitPoints.get(i).getSplitPoint2Print(splitSchedules.get(i));
+				result += " \n";
+				result += "The Found Split Schedule for this Cycle is: \n";
+				result += splitSchedules.get(i).getSchedule2Print();
+			}
+			result += "================================================================= \n";
+			result += " \n";
+		}
+
+		if (multiPrefCycles.isEmpty()) {
+			result += "<< The given set of transactions is ALLOWED under READ COMMITTED level >> \n";
+			result += "================================================================= \n";
+			result += " \n";
+		} else {
+			result += "<< The given set of transactions is NOT ALLOWED under READ COMMITTED level >> \n";
+			result += " \n";
+			result += "The Multi-Prefix Conflict-Free Cycles Are: \n";
+			for (int i = 0; i < multiPrefCycles.size(); i++) {
+				result += "-------------------- \n";
+				result += "Cycle number: " + Integer.toString(i + 1) + " \n";
+				result += multiPrefCycles.get(i).getCycle2Print();
+				result += "The Split Points for this Cycle are: \n";
+				result += multiSplitInfo.get(i).getSplitPoints2Print();
+				result += " \n";
+				result += "The Found Multi-Split Schedule for this Cycle is: \n";
+				result += multiSplitSchedules.get(i).getSchedule2Print();
+
+			}
+			result += "================================================================= \n";
+			result += " \n";
+		}
+		return result;
+	}
+
 }

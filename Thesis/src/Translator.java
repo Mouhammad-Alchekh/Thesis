@@ -263,8 +263,8 @@ public abstract class Translator {
 
 			// ========================= Visualize the parse Tree =========================
 
-			TreeViewer viewer = new TreeViewer(Arrays.asList(sqlParser.getRuleNames()), tree);
-			viewer.open();
+//			TreeViewer viewer = new TreeViewer(Arrays.asList(sqlParser.getRuleNames()), tree);
+//			viewer.open();
 
 			// ============================================================================
 

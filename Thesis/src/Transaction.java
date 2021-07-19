@@ -10,7 +10,6 @@ public class Transaction {
 	private ArrayList<Operation> operations = new ArrayList<Operation>();
 	// To store the short string codes of the used objects in this transaction.
 	private Set<String> usedObjects = new HashSet<String>();
-	
 
 	public Transaction(int id) {
 		this.id = id;
@@ -22,7 +21,7 @@ public class Transaction {
 		// Ignore adding commit operation for the moment
 		usedObjects.add(obj);
 	}
-	
+
 	public void addOperation(int idO, char type, Obj obj) {
 		Operation op = new Operation(idO, type, obj);
 		operations.add(op);
@@ -31,7 +30,7 @@ public class Transaction {
 	public void addUsedObject(String obj) {
 		usedObjects.add(obj);
 	}
-	
+
 	public void Print() {
 		String result = " "; // to combine all operations into this string
 		int size = operations.size();
@@ -42,6 +41,22 @@ public class Transaction {
 			result += op.getType() + Integer.toString(getId()) + "[" + op.getObject() + "]" + " ";
 		}
 		System.out.println(String.format("%s%s%s%s%s%s%s%s", "T", getId(), " = ", "[", result, ", C", getId(), " ]"));
+	}
+
+	// To get the transaction as a string for printing.
+	public String getTransaction2Print() {
+		String result = " "; // to combine all operations into this string
+		int size = operations.size();
+		for (int i = 0; i < size; i++) {
+			if (result != " ") // to add a comma between 2 operations
+				result += ", ";
+			Operation op = operations.get(i);
+			result += op.getType() + Integer.toString(getId()) + "[" + op.getObject() + "]" + " ";
+		}
+
+		result = "T" + Integer.toString(getId()) + " = " + "[" + result + ", C" + Integer.toString(getId()) + " ] \n";
+		return result;
+
 	}
 
 	public int getId() {

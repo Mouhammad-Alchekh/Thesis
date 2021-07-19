@@ -85,11 +85,11 @@ public class Obj {
 	public void print() {
 		Object[] columns = usedColumns.toArray();
 		if (usedColumns.isEmpty() && pKeyName.equals("empty")) {
-			System.out.println("This object is level 1 object");
+			System.out.println("This object is a level 1 object");
 			System.out.println("Table Name is: " + tableName);
 			System.out.println("Table Size is: " + tableSize);
 		} else if (pKeyName.equals("empty")) {
-			System.out.println("This object is level 2 object");
+			System.out.println("This object is a level 2 object");
 			System.out.println("Table Name is: " + tableName);
 			System.out.println("Table Size is: " + tableSize);
 			System.out.println("The used Columns are: ");
@@ -97,7 +97,7 @@ public class Obj {
 				System.out.println(columns[i]);
 
 		} else {
-			System.out.println("This object is level 3 object");
+			System.out.println("This object is a level 3 object");
 			System.out.println("Table Name is: " + tableName);
 			System.out.println("Table Size is: " + tableSize);
 			System.out.println("The used Columns are:");
@@ -106,6 +106,36 @@ public class Obj {
 			System.out.println("The primary key name and value are:");
 			System.out.println(pKeyName + " = " + pKeyValue);
 		}
+	}
+
+	// To get the object as a string for printing.
+	public String getObj2Print() {
+		String result = "";
+
+		Object[] columns = usedColumns.toArray();
+		if (usedColumns.isEmpty() && pKeyName.equals("empty")) {
+			result += "This object is a level 1 object \n";
+			result += "Table Name is: " + tableName + " \n";
+			result += "Table Size is: " + Integer.toString(tableSize) + " \n";
+		} else if (pKeyName.equals("empty")) {
+			result += "This object is a level 2 object \n";
+			result += "Table Name is: " + tableName + " \n";
+			result += "Table Size is: " + Integer.toString(tableSize) + " \n";
+			result += "The used Columns are:  \n";
+			for (int i = 0; i < columns.length; i++)
+				result += columns[i] + " \n";
+
+		} else {
+			result += "This object is a level 3 object \n";
+			result += "Table Name is: " + tableName + " \n";
+			result += "Table Size is: " + Integer.toString(tableSize) + " \n";
+			result += "The used Columns are:  \n";
+			for (int i = 0; i < columns.length; i++)
+				result += columns[i] + " \n";
+			result += "The primary key name and value are: \n";
+			result += pKeyName + " = " + pKeyValue + "\n";
+		}
+		return result;
 	}
 
 	public String getTableName() {

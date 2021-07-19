@@ -43,9 +43,28 @@ public class SplitPoint {
 				break;
 			}
 		}
-		System.out.println(
-				"T" + Integer.toString(tId) + " On Operations (" + op1.getType() + Integer.toString(tId) + "[" + op1.getObject() + "]"
-						+ ", " + op2.getType() + Integer.toString(tId) + "[" + op2.getObject() + "]" + ")");
+		System.out.println("T" + Integer.toString(tId) + " On Operations (" + op1.getType() + Integer.toString(tId)
+				+ "[" + op1.getObject() + "]" + ", " + op2.getType() + Integer.toString(tId) + "[" + op2.getObject()
+				+ "]" + ")");
+	}
+
+	// To get the split point as a string for printing.
+	public String getSplitPoint2Print(Schedule splitSchedule) {
+		Operation op1 = splitSchedule.getOperations().get(opIndex);
+		Operation op2 = op1;
+		for (int i = tIndex + 1; i < splitSchedule.size(); i++) {
+			if (splitSchedule.getTransactionId().get(i) == tId) {
+				op2 = splitSchedule.getOperations().get(i);
+				break;
+			}
+		}
+		
+		// to combine all operations into this string
+		String result = "T" + Integer.toString(tId) + " On Operations (" + op1.getType() + Integer.toString(tId)
+		+ "[" + op1.getObject() + "]" + ", " + op2.getType() + Integer.toString(tId) + "[" + op2.getObject()
+		+ "]" + ") \n";
+
+		return result;
 	}
 
 }

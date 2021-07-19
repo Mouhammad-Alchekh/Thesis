@@ -94,6 +94,19 @@ public class Cycle {
 		}
 		System.out.println();
 	}
+	
+	// To get the cycle as a string for printing.
+	public String getCycle2Print() {
+		// to combine all operations into this string
+		String result = "This Cycle is Constructed From: \n"; 
+
+		for (int i = 0; i < cycle.size(); i++) {
+			result += cycle.get(i).getEdge2Print();
+		}
+		result += " \n";
+
+		return result;
+	}
 
 	// This method reorder the seuqnce of the edges in the cycle list and make the
 	// edge that is equal to the given edge the first edge in this cycle.

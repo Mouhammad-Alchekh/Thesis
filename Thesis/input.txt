@@ -1,11 +1,7 @@
 BEGIN TRANSACTION T1;
 
+SELECT color FROM inventory; 
 
-SELECT color FROM inventory 
-WHERE price > 100;
-
-SELECT name FROM (SELECT gender FROM employee WHERE salary > 40000) 
-WHERE age > 30;
-
+SELECT name, age FROM employee; 
 
 COMMIT;
