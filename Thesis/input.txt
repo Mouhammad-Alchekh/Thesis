@@ -1,7 +1,12 @@
-BEGIN TRANSACTION T1;
+SELECT * FROM table;
+BEGIN TRANSACTION;
 
-SELECT color FROM inventory; 
+SELECT name, age FROM employee;
 
-SELECT name, age FROM employee; 
+SELECT age, gender FROM employee;
+
+SELECT country FROM branch;
+
+SELECT name, phone FROM client;
 
 COMMIT;

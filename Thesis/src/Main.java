@@ -8,7 +8,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -17,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
+import javax.swing.border.LineBorder;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -38,6 +38,8 @@ public class Main implements ActionListener {
 	private static JButton runButton;
 	private static JCheckBox printTransactions;
 	private static JCheckBox printDetails;
+	private static JLabel shadow1;
+	private static JLabel shadow2;
 
 	public static void printTransactions(ArrayList<Transaction> t) {
 		System.out.println("-----------------------------------");
@@ -303,14 +305,14 @@ public class Main implements ActionListener {
 		frame.add(panel);
 //	    LayoutManager layout = new FlowLayout();  
 		panel.setLayout(null);
-		panel.setBackground(new Color(115, 0, 153));
+		panel.setBackground(new Color(105, 0, 143));
 //		panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 10));
 //		panel.setLayout(new GridLayout(0, 1));
 
 		// =============================
 
 		sqlInput = new JLabel("SQL Input", SwingConstants.CENTER);
-		sqlInput.setBorder(BorderFactory.createLineBorder(Color.black));
+		sqlInput.setBorder(new LineBorder(Color.BLACK, 2, false));
 		sqlInput.setFont(new Font("Arial", Font.BOLD, 15)); // fornt names: Courier - Arial
 		sqlInput.setForeground(Color.black);
 		sqlInput.setBackground(new Color(255, 112, 112));
@@ -319,7 +321,7 @@ public class Main implements ActionListener {
 		panel.add(sqlInput);
 
 		schema = new JLabel("Schema", SwingConstants.CENTER);
-		schema.setBorder(BorderFactory.createLineBorder(Color.black));
+		schema.setBorder(new LineBorder(Color.BLACK, 2, false));
 		schema.setFont(new Font("Arial", Font.BOLD, 15)); // fornt names: Courier - Arial
 		schema.setForeground(Color.black);
 		schema.setBackground(new Color(255, 112, 112));
@@ -328,7 +330,7 @@ public class Main implements ActionListener {
 		panel.add(schema);
 
 		outputLabel = new JLabel("Output", SwingConstants.CENTER);
-		outputLabel.setBorder(BorderFactory.createLineBorder(Color.black));
+		outputLabel.setBorder(new LineBorder(Color.BLACK, 2, false));
 		outputLabel.setFont(new Font("Arial", Font.BOLD, 15)); // fornt names: Courier - Arial
 		outputLabel.setForeground(Color.black);
 		outputLabel.setBackground(new Color(255, 112, 112));
@@ -340,7 +342,7 @@ public class Main implements ActionListener {
 
 		runButton = new JButton("RUN");
 		runButton.setFont(new Font("Arial", Font.BOLD, 18));
-		runButton.setBorder(BorderFactory.createLineBorder(Color.black));
+		runButton.setBorder(new LineBorder(Color.BLACK, 3, false));
 		runButton.setBackground(new Color(255, 117, 26));
 		runButton.setBounds(940, 640, 140, 60);
 		runButton.addActionListener(new Main());
@@ -358,6 +360,17 @@ public class Main implements ActionListener {
 		printDetails.setBounds(870, 520, 280, 60);
 		panel.add(printDetails);
 
+		// To add a shadow to the check boxs.
+		shadow1 = new JLabel("", SwingConstants.CENTER);
+		shadow1.setBorder(new LineBorder(Color.BLACK, 4, false));
+		shadow1.setBounds(872, 402, 282, 62);
+		panel.add(shadow1);
+
+		shadow2 = new JLabel("", SwingConstants.CENTER);
+		shadow2.setBorder(new LineBorder(Color.BLACK, 4, false));
+		shadow2.setBounds(872, 522, 282, 62);
+		panel.add(shadow2);
+
 		// =============================
 
 		// To set the window to be visible and in focus.
@@ -369,8 +382,15 @@ public class Main implements ActionListener {
 		String result = "";
 
 		// ================ Getting the entered SQL code & Schemas =================
-		String sqlCode = sqlText.getText();
+		
+		String sqlCode = "SELECT * FROM table;\n";
+		// To make sure that the first line is a correct SQL code.
+		// This will help creating the ParseTree in case the user started the code with
+		// something that is not SQL. which in turn, will help reading all SQL codes
+		// after this non SQL input.
+		sqlCode += sqlText.getText();
 		String insertedSchemas = schemas.getText();
+
 		File inputFile = new File("./input.txt");
 		try {
 			FileWriter fw = new FileWriter(inputFile);

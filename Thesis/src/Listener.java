@@ -128,9 +128,21 @@ public class Listener extends SQLiteParserBaseListener {
 	// This method indicates the termination of a transaction.
 	@Override
 	public void enterCommit_stmt(SQLiteParser.Commit_stmtContext ctx) {
-		// reset the operation counter when exiting a transaction.
-		opID = 1;
-		inTransaction = false;
+		if (inTransaction) {
+			// reset the operation counter when exiting a transaction.
+			opID = 1;
+			inTransaction = false;
+		}
+	}
+
+	// This method indicates the termination of a transaction.
+	@Override
+	public void enterRollback_stmt(SQLiteParser.Rollback_stmtContext ctx) {
+		if (inTransaction) {
+			// reset the operation counter when exiting a transaction.
+			opID = 1;
+			inTransaction = false;
+		}
 	}
 
 	// ============ enter & exit functions of the 4 main statements ===============
