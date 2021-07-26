@@ -17,6 +17,7 @@ public class Listener extends SQLiteParserBaseListener {
 	private String subSelectTableName = "empty";
 	private String joinedTableName = "empty";
 	private ArrayList<String> usedColumn = new ArrayList<String>();
+	private ArrayList<String> subSelectUsedColumn = new ArrayList<String>();
 	private ArrayList<String> usedColumn4Reading = new ArrayList<String>();
 	private ArrayList<String> joinedUsedColumn = new ArrayList<String>();
 	private boolean hasCondition = false;
@@ -86,7 +87,6 @@ public class Listener extends SQLiteParserBaseListener {
 	// sql statements.
 	private void resetAll() {
 		tableName = "empty";
-		subSelectTableName = "empty";
 		joinedTableName = "empty";
 		usedColumn.clear();
 		usedColumn4Reading.clear();
@@ -183,14 +183,23 @@ public class Listener extends SQLiteParserBaseListener {
 			// The object cannot be created if the sql statement works on unknown schema.
 			if (usedSchema != null) {
 				int schemaSize = usedSchema.getAttributes().size() + 1;
-				// create level 1 object because it is a SubSelect statement.
+				// create level 1 object of the SubSelect statement.
 				Obj currentObj = new Obj(subSelectTableName);
 				currentObj.setTableSize(schemaSize);
+				// check if the object can be upgraded to level 2.
+				if (!subSelectUsedColumn.contains("*") && subSelectUsedColumn.size() < schemaSize - 1) {
+					// if the current object doesn't use all attributes in the table.
+					// add the used columns to the current object "level 2".
+					for (int i = 0; i < subSelectUsedColumn.size(); i++)
+						currentObj.addColumn(subSelectUsedColumn.get(i));
+				}
 				// Then, create the operation and add it to the transaction.
 				t.addOperation(opID, 'R', currentObj);
 				// increament the operation counter and reset the SubSelect table name.
 				opID++;
+				// reset the used fields.
 				subSelectTableName = "empty";
+				subSelectUsedColumn.clear();
 			}
 		}
 		// To create an operation that represents the main-select statement.
@@ -521,13 +530,13 @@ public class Listener extends SQLiteParserBaseListener {
 	// select statement uses.
 	@Override
 	public void enterResult_column(SQLiteParser.Result_columnContext ctx) {
-		if (inSelect)
+		if (inSelect || inSubSelect)
 			inResultColumn = true;
 	}
 
 	@Override
 	public void exitResult_column(SQLiteParser.Result_columnContext ctx) {
-		if (inSelect)
+		if (inSelect || inSubSelect)
 			inResultColumn = false;
 	}
 
@@ -638,6 +647,9 @@ public class Listener extends SQLiteParserBaseListener {
 		// To collect the used columns in select statement that has no join.
 		if (inSelect && inResultColumn && !hasJoin)
 			usedColumn.add(ctx.getText());
+		// To collect the used columns in the sub-select statement.
+		if (inSubSelect && inResultColumn)
+			subSelectUsedColumn.add(ctx.getText());
 
 		// To collect the used columns in the main table & joined table in a select
 		// statement that has join.

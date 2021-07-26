@@ -1,17 +1,4 @@
 Employee (id, name, age, gender, salary)
-
-
-
 Client (id, name, phone, address)
-
 Branch (name, country, city)
-
-
-
-
-
-
-
-
-
 Inventory (id, count, price, product, type, color)

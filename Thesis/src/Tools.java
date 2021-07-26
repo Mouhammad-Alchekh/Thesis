@@ -557,7 +557,7 @@ public abstract class Tools {
 			 * find new cycles by replacing the current edge with any similar edge in any
 			 * cycle. this method is needed because if a link has a similar edge this link
 			 * will not be split and it will not connect the given edge. this might lead to
-			 * missing some cycles. this method will compensate that.
+			 * missing some cycles. this method will compensate for that.
 			 **/
 			detectBySimilar(result, currentEdge);
 		}

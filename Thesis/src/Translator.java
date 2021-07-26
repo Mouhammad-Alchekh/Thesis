@@ -3,6 +3,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+
 import java.io.IOException;
 
 import org.antlr.v4.gui.TreeViewer;
@@ -262,10 +266,18 @@ public abstract class Translator {
 			ParseTree tree = sqlParser.parse();
 
 			// ========================= Visualize the parse Tree =========================
-
+			
+//			JFrame frame = new JFrame("Antlr Parse Tree");
+//			frame.setSize(800, 600);
+//			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 //			TreeViewer viewer = new TreeViewer(Arrays.asList(sqlParser.getRuleNames()), tree);
-//			viewer.open();
-
+//			JScrollPane scroll = new JScrollPane(viewer, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+//					JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+////			viewer.open();
+//			viewer.setScale(1.5);
+//			frame.add(scroll);
+//			frame.setVisible(true);
+			
 			// ============================================================================
 
 			// Create our custom Listener

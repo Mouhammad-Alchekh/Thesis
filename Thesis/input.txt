@@ -1,12 +1,14 @@
 SELECT * FROM table;
 BEGIN TRANSACTION;
 
-SELECT name, age FROM employee;
+DELETE FROM branch;
 
-SELECT age, gender FROM employee;
+DELETE FROM client
+WHERE id = 5;
 
-SELECT country FROM branch;
-
-SELECT name, phone FROM client;
-
+DELETE FROM inventory
+WHERE EXISTS
+  ( SELECT name, age, gender FROM employee
+    WHERE employee.id = inventory.id );
+    
 COMMIT;
