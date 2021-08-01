@@ -158,6 +158,42 @@ public class Main implements ActionListener {
 		return result;
 	}
 
+	// This method gets the schemas automatically from a the gui interface.
+	public static ArrayList<Schema> getSchemas4gui(String insertedSchemas) {
+		ArrayList<Schema> result = new ArrayList<Schema>();
+
+		// Tokenize the inserted schemas as a string and convert it to a list in which
+		// each line is a string element in this list.
+		ArrayList<String> lines = new ArrayList<String>();
+		StringTokenizer st1 = new StringTokenizer(insertedSchemas, "\n");
+		while (st1.hasMoreTokens())
+			lines.add(st1.nextToken());
+
+		for (int i = 0; i < lines.size(); i++) {
+			String line = lines.get(i);
+			// replace() doesn't modify the old string. it creates a new one because String
+			// is Immutable.
+			line = line.replace('(', ' ');
+			line = line.replace(',', ' ');
+			line = line.replace(')', ' ');
+
+			ArrayList<String> tokens = new ArrayList<String>();
+			StringTokenizer st2 = new StringTokenizer(line, " ");
+			while (st2.hasMoreTokens())
+				tokens.add(st2.nextToken());
+
+			ArrayList<String> attributes = new ArrayList<String>();
+			for (int j = 2; j < tokens.size(); j++)
+				attributes.add(tokens.get(j));
+
+			if (!tokens.isEmpty()) {
+				Schema schema = new Schema(tokens.get(0), tokens.get(1), attributes);
+				result.add(schema);
+			}
+		}
+		return result;
+	}
+
 	// This method gets the schemas automatically from a text file.
 	public static ArrayList<Schema> getSchemas() throws FileNotFoundException {
 		ArrayList<Schema> result = new ArrayList<Schema>();
@@ -193,7 +229,7 @@ public class Main implements ActionListener {
 		return result;
 	}
 
-	// This method gets the schemas manually from the user.
+	// This method gets the schemas manually from the user using the console.
 	public static ArrayList<Schema> getSchemas2() {
 		ArrayList<Schema> result = new ArrayList<Schema>();
 		boolean finish = false;
@@ -252,7 +288,7 @@ public class Main implements ActionListener {
 
 		// create the frame or the window of the gui.
 		JFrame frame = new JFrame();
-		// create a panal, which is a container that adds object "layout" on the frame
+		// create a panel, which is a container that adds object "layout" on the frame
 		JPanel panel = new JPanel();
 
 		frame.setSize(1280, 800);
@@ -382,7 +418,7 @@ public class Main implements ActionListener {
 		String result = "";
 
 		// ================ Getting the entered SQL code & Schemas =================
-		
+
 		String sqlCode = "SELECT * FROM table;\n";
 		// To make sure that the first line is a correct SQL code.
 		// This will help creating the ParseTree in case the user started the code with
@@ -391,43 +427,19 @@ public class Main implements ActionListener {
 		sqlCode += sqlText.getText();
 		String insertedSchemas = schemas.getText();
 
-		File inputFile = new File("./input.txt");
-		try {
-			FileWriter fw = new FileWriter(inputFile);
-			PrintWriter pWriter = new PrintWriter(fw);
-			pWriter.write(sqlCode);
-			pWriter.close();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		File schemaFile = new File("./schema.txt");
-		try {
-			FileWriter fw2 = new FileWriter(schemaFile);
-			PrintWriter pWriter2 = new PrintWriter(fw2);
-			pWriter2.write(insertedSchemas);
-			pWriter2.close();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
 		// =========================================================================
 
-		try {
-			ArrayList<Schema> schemas = getSchemas();
-			ArrayList<Transaction> example = Translator.translate("./input.txt", schemas);
-			if (example.isEmpty())
-				result += "Empty Or Wrong Input !";
-			else {
-				if (printTransactions.isSelected())
-					result += getTransactions2Print(example);
-				if (printDetails.isSelected())
-					result += getDetails2Print(example, schemas);
-				result += Tools.DecideIsolationLevel2(example);
-			}
-
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
+		ArrayList<Schema> schemas = getSchemas4gui(insertedSchemas);
+		ArrayList<Transaction> example = Translator.translate4gui(sqlCode, schemas);
+		if (example.isEmpty())
+			result += "Empty Or Wrong Input !";
+		else {
+			if (printTransactions.isSelected())
+				result += getTransactions2Print(example);
+			if (printDetails.isSelected())
+				result += getDetails2Print(example, schemas);
+			result += Tools.DecideIsolationLevel2(example);
 		}
-
 		output.setText(result);
 	}
 

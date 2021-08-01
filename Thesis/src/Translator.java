@@ -94,8 +94,8 @@ public abstract class Translator {
 		return objects;
 	}
 
-	// This method checks if there is any overlapping between any two objects and
-	// removes this overlapping by manipulating the objects.
+	// This method checks if there is any overlap between any two objects and
+	// removes this overlap by manipulating the objects.
 	private static void process(ArrayList<Transaction> result) {
 		// Get all objects in every transaction and store them in a single list.
 		ArrayList<ObjectInfo> objects = getObjectsInfo(result);
@@ -293,6 +293,58 @@ public abstract class Translator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		// processing the objects by removing any overlap and converting the string
+		// representation of each object to a short string code.
+		if (result.size() > 0) {
+			process(result);
+			convertObjects(result);
+		}
+		return result;
+	}
+	
+	public static ArrayList<Transaction> translate4gui(String sqlCode, ArrayList<Schema> schemas) {
+		ArrayList<Transaction> result = new ArrayList<Transaction>();
+
+		// get the input from the string received from the gui interface
+		CharStream inputStream = CharStreams.fromString(sqlCode);
+
+		// tokenize the input stream using a lexer
+		SQLiteLexer sqlLexer = new SQLiteLexer(inputStream);
+
+		// create a token stream from a token source whiche is sql lexer
+		CommonTokenStream tokenStream = new CommonTokenStream(sqlLexer);
+
+		// create a parser from a token stream
+		SQLiteParser sqlParser = new SQLiteParser(tokenStream);
+
+		// Create a Pare Tree
+		ParseTree tree = sqlParser.parse();
+
+		// ========================= Visualize the parse Tree =========================
+		
+//			JFrame frame = new JFrame("Antlr Parse Tree");
+//			frame.setSize(800, 600);
+//			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//			TreeViewer viewer = new TreeViewer(Arrays.asList(sqlParser.getRuleNames()), tree);
+//			JScrollPane scroll = new JScrollPane(viewer, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+//					JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+////			viewer.open();
+//			viewer.setScale(1.5);
+//			frame.add(scroll);
+//			frame.setVisible(true);
+		
+		// ============================================================================
+
+		// Create our custom Listener
+		Listener listener = new Listener();
+		listener.setSchemas(schemas);
+
+		// Create the ParseTree walker & Walk over the tree.
+		ParseTreeWalker walker = new ParseTreeWalker();
+		walker.walk(listener, tree);
+
+		result = listener.getResult();
 
 		// processing the objects by removing any overlap and converting the string
 		// representation of each object to a short string code.
