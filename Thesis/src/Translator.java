@@ -299,6 +299,7 @@ public abstract class Translator {
 		if (result.size() > 0) {
 			process(result);
 			convertObjects(result);
+			dicCodes.clear();
 		}
 		return result;
 	}
