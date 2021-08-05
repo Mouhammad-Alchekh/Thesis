@@ -434,10 +434,22 @@ public class Main implements ActionListener {
 		// =========================================================================
 
 		ArrayList<Schema> schemas = getSchemas4gui(insertedSchemas);
-		ArrayList<Transaction> example = Translator.translate4gui(sqlCode, schemas);
+		ResultContainer resultContainer = Translator.translate4gui(sqlCode, schemas);
+		ArrayList<Transaction> example = resultContainer.getResult();
+		boolean hasWarning = resultContainer.getHasWarning();
+		String warningInfo = resultContainer.getWarningInfo();
+		
 		if (example.isEmpty())
 			result += "Empty Or Wrong Input !";
 		else {
+			if (hasWarning) {
+				result += "--------------------- \n";
+				result += "|  WARNING !  |\n";
+				result += "--------------------- \n";
+				result += " \n";
+				result += warningInfo;
+				result += "\n";
+			}
 			if (printTransactions.isSelected())
 				result += getTransactions2Print(example);
 			if (printDetails.isSelected())

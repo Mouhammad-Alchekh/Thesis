@@ -266,7 +266,7 @@ public abstract class Translator {
 			ParseTree tree = sqlParser.parse();
 
 			// ========================= Visualize the parse Tree =========================
-			
+
 //			JFrame frame = new JFrame("Antlr Parse Tree");
 //			frame.setSize(800, 600);
 //			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -277,7 +277,7 @@ public abstract class Translator {
 //			viewer.setScale(1.5);
 //			frame.add(scroll);
 //			frame.setVisible(true);
-			
+
 			// ============================================================================
 
 			// Create our custom Listener
@@ -303,9 +303,11 @@ public abstract class Translator {
 		}
 		return result;
 	}
-	
-	public static ArrayList<Transaction> translate4gui(String sqlCode, ArrayList<Schema> schemas) {
+
+	public static ResultContainer translate4gui(String sqlCode, ArrayList<Schema> schemas) {
 		ArrayList<Transaction> result = new ArrayList<Transaction>();
+		boolean hasWarning;
+		String warningInfo;
 
 		// get the input from the string received from the gui interface
 		CharStream inputStream = CharStreams.fromString(sqlCode);
@@ -323,7 +325,7 @@ public abstract class Translator {
 		ParseTree tree = sqlParser.parse();
 
 		// ========================= Visualize the parse Tree =========================
-		
+
 //			JFrame frame = new JFrame("Antlr Parse Tree");
 //			frame.setSize(800, 600);
 //			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -334,7 +336,7 @@ public abstract class Translator {
 //			viewer.setScale(1.5);
 //			frame.add(scroll);
 //			frame.setVisible(true);
-		
+
 		// ============================================================================
 
 		// Create our custom Listener
@@ -346,6 +348,8 @@ public abstract class Translator {
 		walker.walk(listener, tree);
 
 		result = listener.getResult();
+		hasWarning = listener.getHasWarning();
+		warningInfo = listener.getWarningInfo();
 
 		// processing the objects by removing any overlap and converting the string
 		// representation of each object to a short string code.
@@ -354,6 +358,7 @@ public abstract class Translator {
 			convertObjects(result);
 			dicCodes.clear();
 		}
-		return result;
+		ResultContainer resultContainer = new ResultContainer(hasWarning, warningInfo, result);
+		return resultContainer;
 	}
 }

@@ -4,6 +4,8 @@ public class Listener extends SQLiteParserBaseListener {
 
 	private ArrayList<Transaction> result = new ArrayList<Transaction>();
 	private ArrayList<Schema> schemas = new ArrayList<Schema>();
+	private boolean hasWarning = false;
+	private String warningInfo = "";
 
 	// This is needed to know if a sql statement belongs to a transaction or not.
 	private boolean inTransaction = false;
@@ -59,6 +61,22 @@ public class Listener extends SQLiteParserBaseListener {
 
 	public void setSchemas(ArrayList<Schema> schemas) {
 		this.schemas = schemas;
+	}
+
+	public boolean getHasWarning() {
+		return hasWarning;
+	}
+
+	public void setHasWarning(boolean hasWarning) {
+		this.hasWarning = hasWarning;
+	}
+
+	public String getWarningInfo() {
+		return warningInfo;
+	}
+
+	public void setWarningInfo(String warningInfo) {
+		this.warningInfo = warningInfo;
 	}
 
 	// =========================================================
@@ -181,7 +199,15 @@ public class Listener extends SQLiteParserBaseListener {
 			// get the table schema that this statement is using.
 			Schema usedSchema = getMatchedSchema(subSelectTableName);
 			// The object cannot be created if the sql statement works on unknown schema.
-			if (usedSchema != null) {
+			if (usedSchema == null) {
+				hasWarning = true;
+				warningInfo += "The following sub-select statement cannot be translated: \n";
+				for (int i = 0; i < ctx.getChildCount(); i++)
+					warningInfo = warningInfo + ctx.getChild(i).getText() + " ";
+				warningInfo += "; \n";
+				warningInfo += "No schema was found for this statement ! \n";
+				warningInfo += " \n";
+			} else {
 				int schemaSize = usedSchema.getAttributes().size() + 1;
 				// create level 1 object of the SubSelect statement.
 				Obj currentObj = new Obj(subSelectTableName);
@@ -212,7 +238,15 @@ public class Listener extends SQLiteParserBaseListener {
 			Schema usedSchema = getMatchedSchema(tableName);
 
 			// The object cannot be created if the sql statement works on unknown schema.
-			if (usedSchema != null) {
+			if (usedSchema == null) {
+				hasWarning = true;
+				warningInfo += "The following select statement cannot be translated: \n";
+				for (int i = 0; i < ctx.getChildCount(); i++)
+					warningInfo = warningInfo + ctx.getChild(i).getText() + " ";
+				warningInfo += "; \n";
+				warningInfo += "No schema was found for this statement ! \n";
+				warningInfo += " \n";
+			} else {
 				int schemaSize = usedSchema.getAttributes().size() + 1;
 				String PrimaryKey = usedSchema.getpKey();
 
@@ -257,7 +291,28 @@ public class Listener extends SQLiteParserBaseListener {
 			// if the select statement has a join, create an aditional reading operation.
 			if (hasJoin) {
 				Schema usedSchema4Join = getMatchedSchema(joinedTableName);
-				if (usedSchema4Join != null) {
+				if (usedSchema4Join == null) {
+					hasWarning = true;
+					warningInfo += "The join part of the following select statement cannot be translated: \n";
+					for (int i = 0; i < ctx.getChildCount(); i++) {
+						if (i > 0 && ctx.getChild(i - 1).getText().equalsIgnoreCase("from")) {
+							for (int j = 0; j < ctx.getChild(i).getChildCount(); j++) {
+								if (ctx.getChild(i).getChild(j).getChildCount() > 1) {
+									for (int k = 0; k < ctx.getChild(i).getChild(j).getChildCount(); k++)
+										warningInfo = warningInfo + ctx.getChild(i).getChild(j).getChild(k).getText()
+												+ " ";
+								} else {
+									warningInfo = warningInfo + ctx.getChild(i).getChild(j).getText() + " ";
+								}
+							}
+						} else {
+							warningInfo = warningInfo + ctx.getChild(i).getText() + " ";
+						}
+					}
+					warningInfo += "; \n";
+					warningInfo += "No schema was found for the join part of this statement ! \n";
+					warningInfo += " \n";
+				} else {
 					int schemaSize4Join = usedSchema4Join.getAttributes().size() + 1;
 					Obj object4Join = new Obj(joinedTableName);
 					object4Join.setTableSize(schemaSize4Join);
@@ -316,7 +371,33 @@ public class Listener extends SQLiteParserBaseListener {
 			Schema usedSchema = getMatchedSchema(tableName);
 
 			// The object cannot be created if the sql statement works on unknown schema.
-			if (usedSchema != null) {
+			if (usedSchema == null) {
+				hasWarning = true;
+				warningInfo += "The following insert statement cannot be translated: \n";
+				for (int i = 0; i < ctx.getChildCount(); i++) {
+					if (ctx.getChild(i).getText().contains("SELECT")) {
+						if (ctx.getChild(i).getChildCount() == 1) {
+							for (int j = 0; j < ctx.getChild(i).getChild(0).getChildCount(); j++)
+							warningInfo = warningInfo + ctx.getChild(i).getChild(0).getChild(j).getText() + " ";
+						} else {
+							for (int k = 0; k < ctx.getChild(i).getChildCount(); k++) {
+								if (ctx.getChild(i).getChild(k).getChildCount() == 0)
+									warningInfo = warningInfo + ctx.getChild(i).getChild(k).getText() + " ";
+								else {
+									for (int j = 0; j < ctx.getChild(i).getChild(k).getChild(0).getChildCount(); j++)
+										warningInfo = warningInfo
+												+ ctx.getChild(i).getChild(k).getChild(0).getChild(j).getText() + " ";
+								}
+							}
+						}
+					} else {
+						warningInfo = warningInfo + ctx.getChild(i).getText() + " ";
+					}
+				}
+				warningInfo += "; \n";
+				warningInfo += "No schema was found for this statement ! \n";
+				warningInfo += " \n";
+			} else {
 				int schemaSize = usedSchema.getAttributes().size() + 1;
 				String PrimaryKey = usedSchema.getpKey();
 				boolean finish = false;
@@ -386,7 +467,33 @@ public class Listener extends SQLiteParserBaseListener {
 			Schema usedSchema = getMatchedSchema(tableName);
 
 			// The object cannot be created if the sql statment works on unknown schema.
-			if (usedSchema != null) {
+			if (usedSchema == null) {
+				hasWarning = true;
+				warningInfo += "The following delete statement cannot be translated: \n";
+				for (int i = 0; i < ctx.getChildCount(); i++) {
+					if (ctx.getChild(i).getText().contains("SELECT")) {
+						if (ctx.getChild(i).getChildCount() == 1) {
+							for (int j = 0; j < ctx.getChild(i).getChild(0).getChildCount(); j++)
+							warningInfo = warningInfo + ctx.getChild(i).getChild(0).getChild(j).getText() + " ";
+						} else {
+							for (int k = 0; k < ctx.getChild(i).getChildCount(); k++) {
+								if (ctx.getChild(i).getChild(k).getChildCount() == 0)
+									warningInfo = warningInfo + ctx.getChild(i).getChild(k).getText() + " ";
+								else {
+									for (int j = 0; j < ctx.getChild(i).getChild(k).getChild(0).getChildCount(); j++)
+										warningInfo = warningInfo
+												+ ctx.getChild(i).getChild(k).getChild(0).getChild(j).getText() + " ";
+								}
+							}
+						}
+					} else {
+						warningInfo = warningInfo + ctx.getChild(i).getText() + " ";
+					}
+				}
+				warningInfo += "; \n";
+				warningInfo += "No schema was found for this statement ! \n";
+				warningInfo += " \n";
+			} else {
 				int schemaSize = usedSchema.getAttributes().size() + 1;
 				String PrimaryKey = usedSchema.getpKey();
 
@@ -453,8 +560,33 @@ public class Listener extends SQLiteParserBaseListener {
 			Schema usedSchema = getMatchedSchema(tableName);
 
 			// The object cannot be created if the sql statment works on unknown schema.
-			if (usedSchema != null) {
-
+			if (usedSchema == null) {
+				hasWarning = true;
+				warningInfo += "The following update statement cannot be translated: \n";
+				for (int i = 0; i < ctx.getChildCount(); i++) {
+					if (ctx.getChild(i).getText().contains("SELECT")) {
+						if (ctx.getChild(i).getChildCount() == 1) {
+							for (int j = 0; j < ctx.getChild(i).getChild(0).getChildCount(); j++)
+							warningInfo = warningInfo + ctx.getChild(i).getChild(0).getChild(j).getText() + " ";
+						} else {
+							for (int k = 0; k < ctx.getChild(i).getChildCount(); k++) {
+								if (ctx.getChild(i).getChild(k).getChildCount() == 0)
+									warningInfo = warningInfo + ctx.getChild(i).getChild(k).getText() + " ";
+								else {
+									for (int j = 0; j < ctx.getChild(i).getChild(k).getChild(0).getChildCount(); j++)
+										warningInfo = warningInfo
+												+ ctx.getChild(i).getChild(k).getChild(0).getChild(j).getText() + " ";
+								}
+							}
+						}
+					} else {
+						warningInfo = warningInfo + ctx.getChild(i).getText() + " ";
+					}
+				}
+				warningInfo += "; \n";
+				warningInfo += "No schema was found for this statement ! \n";
+				warningInfo += " \n";
+			} else {
 				int schemaSize = usedSchema.getAttributes().size() + 1;
 				String PrimaryKey = usedSchema.getpKey();
 
