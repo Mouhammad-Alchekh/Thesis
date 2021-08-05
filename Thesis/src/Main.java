@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -18,8 +19,10 @@ import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -165,7 +168,7 @@ public class Main implements ActionListener {
 		// Tokenize the inserted schemas as a string and convert it to a list in which
 		// each line is a string element in this list.
 		ArrayList<String> lines = new ArrayList<String>();
-		StringTokenizer st1 = new StringTokenizer(insertedSchemas, "\n");
+		StringTokenizer st1 = new StringTokenizer(insertedSchemas, "\n)");
 		while (st1.hasMoreTokens())
 			lines.add(st1.nextToken());
 
@@ -290,7 +293,7 @@ public class Main implements ActionListener {
 		JFrame frame = new JFrame();
 		// create a panel, which is a container that adds object "layout" on the frame
 		JPanel panel = new JPanel();
-
+		
 		frame.setSize(1280, 800);
 		// To close the frame properly.
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -339,6 +342,7 @@ public class Main implements ActionListener {
 
 		// To put the panel on the frame.
 		frame.add(panel);
+		
 //	    LayoutManager layout = new FlowLayout();  
 		panel.setLayout(null);
 		panel.setBackground(new Color(105, 0, 143));
