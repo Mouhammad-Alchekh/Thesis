@@ -462,9 +462,8 @@ public class Main implements ActionListener {
 	public static void main(String[] args) throws FileNotFoundException {
 
 //		runInConsole();
-
+		
 		runInGUI();
-
 	}
 
 }
