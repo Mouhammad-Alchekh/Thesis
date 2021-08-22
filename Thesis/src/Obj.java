@@ -115,21 +115,21 @@ public class Obj {
 		Object[] columns = usedColumns.toArray();
 		if (usedColumns.isEmpty() && pKeyName.equals("empty")) {
 			result += "This object is a level 1 object \n";
-			result += "Table Name is: " + tableName + " \n";
-			result += "Table Size is: " + Integer.toString(tableSize) + " \n";
+			result += "Table Name: " + tableName + " \n";
+			result += "Table Size: " + Integer.toString(tableSize) + " \n";
 		} else if (pKeyName.equals("empty")) {
 			result += "This object is a level 2 object \n";
-			result += "Table Name is: " + tableName + " \n";
-			result += "Table Size is: " + Integer.toString(tableSize) + " \n";
-			result += "The used Columns are:  \n";
+			result += "Table Name: " + tableName + " \n";
+			result += "Table Size: " + Integer.toString(tableSize) + " \n";
+			result += "The used columns are:  \n";
 			for (int i = 0; i < columns.length; i++)
 				result += columns[i] + " \n";
 
 		} else {
 			result += "This object is a level 3 object \n";
-			result += "Table Name is: " + tableName + " \n";
-			result += "Table Size is: " + Integer.toString(tableSize) + " \n";
-			result += "The used Columns are:  \n";
+			result += "Table Name: " + tableName + " \n";
+			result += "Table Size: " + Integer.toString(tableSize) + " \n";
+			result += "The used columns are:  \n";
 			for (int i = 0; i < columns.length; i++)
 				result += columns[i] + " \n";
 			result += "The primary key name and value are: \n";

@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import javax.swing.BorderFactory;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -16,16 +18,20 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.border.EmptyBorder;
 
 public class Main implements ActionListener {
 
@@ -293,7 +299,7 @@ public class Main implements ActionListener {
 		JFrame frame = new JFrame();
 		// create a panel, which is a container that adds object "layout" on the frame
 		JPanel panel = new JPanel();
-		
+
 		frame.setSize(1280, 800);
 		// To close the frame properly.
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -315,7 +321,7 @@ public class Main implements ActionListener {
 //		JScrollPane scroll = new JScrollPane(sqlText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 //				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scroll.setBounds(60, 70, 500, 230);
-		frame.add(scroll);
+		frame.getContentPane().add(scroll);
 
 		schemas = new JTextArea();
 		schemas.setMargin(new Insets(10, 10, 10, 10));
@@ -325,7 +331,7 @@ public class Main implements ActionListener {
 		scroll2 = new JScrollPane(schemas, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scroll2.setBounds(690, 70, 500, 230);
-		frame.add(scroll2);
+		frame.getContentPane().add(scroll2);
 
 		output = new JTextArea();
 		output.setMargin(new Insets(10, 10, 10, 10));
@@ -336,16 +342,16 @@ public class Main implements ActionListener {
 //		JScrollPane scroll = new JScrollPane(sqlText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 //				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scroll3.setBounds(60, 380, 700, 360);
-		frame.add(scroll3);
+		frame.getContentPane().add(scroll3);
 
 		// ==================================================================
 
 		// To put the panel on the frame.
-		frame.add(panel);
-		
+		frame.getContentPane().add(panel);
+
 //	    LayoutManager layout = new FlowLayout();  
 		panel.setLayout(null);
-		panel.setBackground(new Color(105, 0, 143));
+		panel.setBackground(new Color(50, 78, 78));
 //		panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 10));
 //		panel.setLayout(new GridLayout(0, 1));
 
@@ -353,27 +359,27 @@ public class Main implements ActionListener {
 
 		sqlInput = new JLabel("SQL Input", SwingConstants.CENTER);
 		sqlInput.setBorder(new LineBorder(Color.BLACK, 2, false));
-		sqlInput.setFont(new Font("Arial", Font.BOLD, 15)); // fornt names: Courier - Arial
+		sqlInput.setFont(new Font("Arial", Font.BOLD, 15)); // font names: Courier - Arial
 		sqlInput.setForeground(Color.black);
-		sqlInput.setBackground(new Color(255, 112, 112));
+		sqlInput.setBackground(new Color(204, 204, 179));
 		sqlInput.setOpaque(true);
 		sqlInput.setBounds(60, 20, 100, 40);
 		panel.add(sqlInput);
 
 		schema = new JLabel("Schema", SwingConstants.CENTER);
 		schema.setBorder(new LineBorder(Color.BLACK, 2, false));
-		schema.setFont(new Font("Arial", Font.BOLD, 15)); // fornt names: Courier - Arial
+		schema.setFont(new Font("Arial", Font.BOLD, 15)); // font names: Courier - Arial
 		schema.setForeground(Color.black);
-		schema.setBackground(new Color(255, 112, 112));
+		schema.setBackground(new Color(204, 204, 179));
 		schema.setOpaque(true);
 		schema.setBounds(690, 20, 100, 40);
 		panel.add(schema);
 
 		outputLabel = new JLabel("Output", SwingConstants.CENTER);
 		outputLabel.setBorder(new LineBorder(Color.BLACK, 2, false));
-		outputLabel.setFont(new Font("Arial", Font.BOLD, 15)); // fornt names: Courier - Arial
+		outputLabel.setFont(new Font("Arial", Font.BOLD, 15)); // font names: Courier - Arial
 		outputLabel.setForeground(Color.black);
-		outputLabel.setBackground(new Color(255, 112, 112));
+		outputLabel.setBackground(new Color(204, 204, 179));
 		outputLabel.setOpaque(true);
 		outputLabel.setBounds(60, 330, 100, 40);
 		panel.add(outputLabel);
@@ -383,20 +389,20 @@ public class Main implements ActionListener {
 		runButton = new JButton("RUN");
 		runButton.setFont(new Font("Arial", Font.BOLD, 18));
 		runButton.setBorder(new LineBorder(Color.BLACK, 3, false));
-		runButton.setBackground(new Color(255, 117, 26));
+		runButton.setBackground(new Color(194, 194, 163));
 		runButton.setBounds(940, 640, 140, 60);
 		runButton.addActionListener(new Main());
 		panel.add(runButton);
 
 		printTransactions = new JCheckBox("Print Transactions");
 		printTransactions.setFont(new Font("Arial", Font.BOLD, 18));
-		printTransactions.setBackground(new Color(7, 230, 185));
+		printTransactions.setBackground(new Color(178, 178, 102));
 		printTransactions.setBounds(870, 400, 280, 60);
 		panel.add(printTransactions);
 
 		printDetails = new JCheckBox("Print Details");
 		printDetails.setFont(new Font("Arial", Font.BOLD, 18));
-		printDetails.setBackground(new Color(51, 204, 255));
+		printDetails.setBackground(new Color(198, 140, 83));
 		printDetails.setBounds(870, 520, 280, 60);
 		panel.add(printDetails);
 
@@ -417,8 +423,194 @@ public class Main implements ActionListener {
 		frame.setVisible(true);
 	}
 
+	public static void runInGUIv2() {
+
+		// create the frame or the window of the gui.
+		JFrame frame = new JFrame();
+		// create a panel, which is a container that adds object "layout" on the frame
+		JPanel panel = new JPanel();
+
+		frame.setSize(1280, 800);
+		// To close the frame properly.
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		// To set the title
+		frame.setTitle("Decide Isolation Level");
+//		frame.setForeground(new Color(100, 0, 0));
+		// To pack the components within the window based on the component’s preferred
+		// sizes.
+//		frame.pack();
+
+		// ================ Creating a scrollable text area =================
+		sqlText = new JTextArea();
+		sqlText.setMargin(new Insets(10, 10, 10, 10));
+		sqlText.setFont(new Font("Consolas", Font.BOLD, 13));
+		sqlText.setBackground(new Color(210, 210, 210));
+		scroll = new JScrollPane(sqlText, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+//		JScrollPane scroll = new JScrollPane(sqlText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+//				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+//        scroll.setBounds(60, 70, 500, 230);
+//        frame.getContentPane().add(scroll);
+
+		schemas = new JTextArea();
+		schemas.setMargin(new Insets(10, 10, 10, 10));
+		schemas.setFont(new Font("Calibri", Font.BOLD, 14));
+		schemas.setForeground(new Color(160, 0, 0));
+		schemas.setBackground(new Color(210, 210, 210));
+		scroll2 = new JScrollPane(schemas, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+//        scroll2.setBounds(690, 70, 500, 230);
+//        frame.add(scroll2);
+
+		output = new JTextArea();
+		output.setMargin(new Insets(10, 10, 10, 10));
+		output.setFont(new Font("Arial", Font.BOLD, 12));
+		output.setBackground(new Color(210, 210, 210));
+		scroll3 = new JScrollPane(output, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+//		JScrollPane scroll = new JScrollPane(sqlText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+//				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+//        scroll3.setBounds(60, 380, 700, 360);
+//        frame.add(scroll3);
+
+		// ==================================================================
+		// To put the panel on the frame.
+//        frame.add(panel);
+//	    LayoutManager layout = new FlowLayout();  
+//        panel.setLayout(null);
+		panel.setBackground(new Color(50, 78, 78));
+//        panel.setBorder(new EmptyBorder(0, 0, 0, 0));
+//		panel.setLayout(new GridLayout(0, 1));
+
+		// =============================
+		sqlInput = new JLabel("SQL Input", SwingConstants.CENTER);
+		sqlInput.setBorder(new LineBorder(Color.BLACK, 2, false));
+		sqlInput.setFont(new Font("Arial", Font.BOLD, 15));
+		sqlInput.setForeground(Color.black);
+		sqlInput.setBackground(new Color(204, 204, 179));
+		sqlInput.setOpaque(true);
+//        
+		sqlInput.setPreferredSize(new Dimension(100, 40));
+		sqlInput.setMinimumSize(new Dimension(100, 40));
+		sqlInput.setMaximumSize(new Dimension(100, 40));
+//        sqlInput.setBounds(60, 20, 100, 40);
+//        panel.add(sqlInput);
+
+		schema = new JLabel("Schema", SwingConstants.CENTER);
+		schema.setBorder(new LineBorder(Color.BLACK, 2, false));
+		schema.setFont(new Font("Arial", Font.BOLD, 15));
+		schema.setForeground(Color.black);
+		schema.setBackground(new Color(204, 204, 179));
+		schema.setOpaque(true);
+//        
+		schema.setPreferredSize(new Dimension(100, 40));
+		schema.setMinimumSize(new Dimension(100, 40));
+		schema.setMaximumSize(new Dimension(100, 40));
+//        schema.setBounds(690, 20, 100, 40);
+//        panel.add(schema);
+
+		outputLabel = new JLabel("Output", SwingConstants.CENTER);
+		outputLabel.setBorder(new LineBorder(Color.BLACK, 2, false));
+		outputLabel.setFont(new Font("Arial", Font.BOLD, 15));
+		outputLabel.setForeground(Color.black);
+		outputLabel.setBackground(new Color(204, 204, 179));
+		outputLabel.setOpaque(true);
+//        
+		outputLabel.setPreferredSize(new Dimension(100, 40));
+		outputLabel.setMinimumSize(new Dimension(100, 40));
+		outputLabel.setMaximumSize(new Dimension(100, 40));
+//        outputLabel.setBounds(60, 330, 100, 40);
+//        panel.add(outputLabel);
+
+		// =============================
+		runButton = new JButton("RUN");
+		runButton.setFont(new Font("Arial", Font.BOLD, 18));
+		runButton.setBorder(new LineBorder(Color.BLACK, 3, false));
+		runButton.setBackground(new Color(194, 194, 163));
+//        runButton.setBounds(940, 640, 140, 60);
+//        runButton.addActionListener(new Main());
+//        panel.add(runButton);
+		runButton.setPreferredSize(new Dimension(140, 60));
+
+		printTransactions = new JCheckBox("Print Transactions");
+		printTransactions.setFont(new Font("Arial", Font.BOLD, 18));
+		printTransactions.setBorder(new LineBorder(Color.BLACK, 3, false));
+		printTransactions.setBackground(new Color(178, 178, 102));
+//        
+		printTransactions.setPreferredSize(new Dimension(280, 60));
+
+//        printTransactions.setBounds(870, 400, 280, 60);
+//        panel.add(printTransactions);
+		printDetails = new JCheckBox("Print Details");
+		printDetails.setFont(new Font("Arial", Font.BOLD, 18));
+		printDetails.setBorder(new LineBorder(Color.BLACK, 3, false));
+		printDetails.setBackground(new Color(198, 140, 83));
+//        printDetails.setBounds(870, 520, 280, 60);
+//        panel.add(printDetails);
+
+		// To add a shadow to the check boxs.
+//        shadow1 = new JLabel("", SwingConstants.CENTER);
+//        shadow1.setBorder(new LineBorder(Color.BLACK, 4, false));
+//        shadow1.setBounds(872, 402, 282, 62);
+//        panel.add(shadow1);
+
+//        shadow2 = new JLabel("", SwingConstants.CENTER);
+//        shadow2.setBorder(new LineBorder(Color.BLACK, 4, false));
+//        shadow2.setBounds(872, 522, 282, 62);
+//        panel.add(shadow2);
+
+		GroupLayout layout = new GroupLayout(panel);
+		panel.setLayout(layout);
+
+		layout.setHorizontalGroup(layout.createParallelGroup(Alignment.LEADING)
+				.addGroup(layout.createSequentialGroup().addGap(60, 60, 60).addGroup(layout.createParallelGroup()
+						.addGroup(layout.createSequentialGroup().addComponent(outputLabel).addGap(450, 450, 450))
+						.addGroup(layout.createSequentialGroup().addGroup(layout
+								.createParallelGroup().addGroup(layout.createSequentialGroup()
+										.addGroup(layout
+												.createParallelGroup().addComponent(scroll).addComponent(sqlInput))
+										.addGap(130, 130, 130)
+										.addGroup(layout.createParallelGroup(Alignment.LEADING).addComponent(schema)
+												.addComponent(scroll2)))
+								.addGroup(layout.createSequentialGroup().addComponent(scroll3).addGap(110, 110, 110)
+										.addGroup(layout.createParallelGroup(Alignment.LEADING).addComponent(printTransactions)
+												.addComponent(printDetails)
+												.addComponent(runButton, 140, 140, 140))
+										.addGap(40, 40, 40)))
+								.addGap(65, 65, 65)))));
+
+		layout.linkSize(SwingConstants.HORIZONTAL, new Component[] { printDetails, printTransactions });
+		
+
+		layout.setVerticalGroup(layout.createParallelGroup().addGroup(layout.createSequentialGroup()
+				.addGap(20, 20, 20)
+				.addGroup(layout.createParallelGroup()
+						.addGroup(layout.createSequentialGroup().addComponent(schema)
+								.addPreferredGap(ComponentPlacement.RELATED).addComponent(scroll2, 230, 230, 230))
+						.addGroup(layout.createSequentialGroup().addComponent(sqlInput)
+								.addPreferredGap(ComponentPlacement.RELATED).addComponent(scroll, 230, 230, 230)))
+				.addGap(32, 32, 32).addComponent(outputLabel).addPreferredGap(ComponentPlacement.RELATED)
+				.addGroup(layout.createParallelGroup(Alignment.LEADING).addComponent(scroll3)
+						.addGroup(layout.createSequentialGroup().addGap(20, 20, 20)
+								.addComponent(printTransactions)
+								.addGap(60, 60, 60).addComponent(printDetails).addGap(60, 60, 60)
+								.addComponent(runButton)))
+				.addGap(50, 50, 50)));
+
+		layout.linkSize(SwingConstants.VERTICAL, new Component[] { printDetails, printTransactions, runButton });
+
+		frame.getContentPane().add(panel, BorderLayout.CENTER);
+
+//        frame.pack();
+
+		// =============================
+		// To set the window to be visible and in focus.
+		frame.setVisible(true);
+	}
+
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		long startTime = System.nanoTime();
 		String result = "";
 
 		// ================ Getting the entered SQL code & Schemas =================
@@ -438,9 +630,9 @@ public class Main implements ActionListener {
 		ArrayList<Transaction> example = resultContainer.getResult();
 		boolean hasWarning = resultContainer.getHasWarning();
 		String warningInfo = resultContainer.getWarningInfo();
-		
+
 		if (example.isEmpty())
-			result += "Empty Or Wrong Input !";
+			result += "Empty Or Wrong Input ! \n";
 		else {
 			if (hasWarning) {
 				result += "--------------------- \n";
@@ -449,21 +641,37 @@ public class Main implements ActionListener {
 				result += " \n";
 				result += warningInfo;
 				result += "\n";
+				if (!printTransactions.isSelected())
+					result += "======================== \n";
 			}
 			if (printTransactions.isSelected())
 				result += getTransactions2Print(example);
 			if (printDetails.isSelected())
 				result += getDetails2Print(example, schemas);
-			result += Tools.DecideIsolationLevel2(example);
+
+			if (hasWarning) {
+				result += "\n";
+				result += " The Algorithm cannot be run ! \n";
+				result += " Please fix the warnings first. \n";
+				result += "\n";
+				result += "======================== \n";
+			} else {
+				result += Tools.DecideIsolationLevel2(example);
+			}
 		}
+		long stopTime = System.nanoTime();
+		long elapsedTime = stopTime - startTime;
+		result += "\n";
+		result += "Elapsed Time = " + Long.toString(elapsedTime) + " ns";
 		output.setText(result);
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {
 
 //		runInConsole();
-		
-		runInGUI();
-	}
 
+		runInGUI();
+
+//		runInGUIv2();
+	}
 }

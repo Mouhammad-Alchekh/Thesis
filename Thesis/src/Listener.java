@@ -378,7 +378,7 @@ public class Listener extends SQLiteParserBaseListener {
 					if (ctx.getChild(i).getText().contains("SELECT")) {
 						if (ctx.getChild(i).getChildCount() == 1) {
 							for (int j = 0; j < ctx.getChild(i).getChild(0).getChildCount(); j++)
-							warningInfo = warningInfo + ctx.getChild(i).getChild(0).getChild(j).getText() + " ";
+								warningInfo = warningInfo + ctx.getChild(i).getChild(0).getChild(j).getText() + " ";
 						} else {
 							for (int k = 0; k < ctx.getChild(i).getChildCount(); k++) {
 								if (ctx.getChild(i).getChild(k).getChildCount() == 0)
@@ -474,7 +474,7 @@ public class Listener extends SQLiteParserBaseListener {
 					if (ctx.getChild(i).getText().contains("SELECT")) {
 						if (ctx.getChild(i).getChildCount() == 1) {
 							for (int j = 0; j < ctx.getChild(i).getChild(0).getChildCount(); j++)
-							warningInfo = warningInfo + ctx.getChild(i).getChild(0).getChild(j).getText() + " ";
+								warningInfo = warningInfo + ctx.getChild(i).getChild(0).getChild(j).getText() + " ";
 						} else {
 							for (int k = 0; k < ctx.getChild(i).getChildCount(); k++) {
 								if (ctx.getChild(i).getChild(k).getChildCount() == 0)
@@ -552,7 +552,7 @@ public class Listener extends SQLiteParserBaseListener {
 	@Override
 	public void exitUpdate_stmt(SQLiteParser.Update_stmtContext ctx) {
 		if (inTransaction) {
-			inDelete = false;
+			inUpdate = false;
 
 			// Get the current transaction, which is the last transaction in result list.
 			Transaction t = result.get(result.size() - 1);
@@ -567,7 +567,7 @@ public class Listener extends SQLiteParserBaseListener {
 					if (ctx.getChild(i).getText().contains("SELECT")) {
 						if (ctx.getChild(i).getChildCount() == 1) {
 							for (int j = 0; j < ctx.getChild(i).getChild(0).getChildCount(); j++)
-							warningInfo = warningInfo + ctx.getChild(i).getChild(0).getChild(j).getText() + " ";
+								warningInfo = warningInfo + ctx.getChild(i).getChild(0).getChild(j).getText() + " ";
 						} else {
 							for (int k = 0; k < ctx.getChild(i).getChildCount(); k++) {
 								if (ctx.getChild(i).getChild(k).getChildCount() == 0)
@@ -676,15 +676,37 @@ public class Listener extends SQLiteParserBaseListener {
 	// which has no join, reads from.
 	@Override
 	public void enterTable_or_subquery(SQLiteParser.Table_or_subqueryContext ctx) {
-		if (inSelect && !inSubSelect && !hasJoin)
+		if (inSelect && !inSubSelect) {
+			if (ctx.getText().contains("SELECT")) {
+				hasWarning = true;
+				warningInfo += "The following select statement cannot be translated correctly: \n";
+				for (int i = 0; i < ctx.getParent().getChildCount(); i++) {
+					if (ctx.getParent().getChild(i).getText().contains("SELECT") && i != 0) {
+						for (int j = 0; j < ctx.getChildCount(); j++) {
+							if (ctx.getChild(j).getChildCount() != 0) {
+								for (int k = 0; k < ctx.getChild(j).getChild(0).getChildCount(); k++)
+									warningInfo = warningInfo + ctx.getChild(j).getChild(0).getChild(k).getText() + " ";
+							} else {
+								warningInfo = warningInfo + ctx.getChild(j).getText() + " ";
+							}
+						}
+					} else {
+						warningInfo = warningInfo + ctx.getParent().getChild(i).getText() + " ";
+					}
+				}
+				warningInfo += "; \n";
+				warningInfo += "Table name is not declared distinctly and cannot be deduced correctly from the subquery ! \n";
+				warningInfo += " \n";
+			}
 			inTableOrSubquery = true;
+		}
 		if (inSubSelect)
 			subSelectTableName = ctx.getText();
 	}
 
 	@Override
 	public void exitTable_or_subquery(SQLiteParser.Table_or_subqueryContext ctx) {
-		if (inSelect && !inSubSelect && !hasJoin)
+		if (inSelect && !inSubSelect)
 			inTableOrSubquery = false;
 	}
 

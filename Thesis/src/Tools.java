@@ -741,6 +741,17 @@ public abstract class Tools {
 			Set<Integer> usedTransactions = new HashSet<Integer>();
 			usedTransactions.add(splitTransaction.getId());
 
+			// reorder the cycle so that the edge that has the split transaction in its
+			// left part is the first edge.
+			Edge firstEdge = null;
+			for (int j = 0; j < currentCycle.size(); j++) {
+				if (currentCycle.getEdge(j).getT1ID() == splitTransaction.getId()) {
+					firstEdge = currentCycle.getEdge(j);
+					break;
+				}
+			}
+			currentCycle.reorder(firstEdge);
+
 			// First Step: add all operations in the prefix part of the split transaction to
 			// the schedule
 			for (int j = 0; j <= splitPosition; j++) {
@@ -1161,6 +1172,23 @@ public abstract class Tools {
 		result += "====================================== \n";
 
 		ArrayList<Edge> edges = getEdges(t);
+		// ============= For Experiments =============
+//		int readsNr = 0;
+//		int writesNr = 0;
+//		for (int i = 0; i < t.size(); i++) {
+//			ArrayList<Operation> ops = t.get(i).getOperations();
+//			for (int j = 0; j < ops.size(); j++) {
+//				Operation op = ops.get(j);
+//				if (op.getType() == 'R')
+//					readsNr += 1;
+//				if (op.getType() == 'W')
+//					writesNr += 1;
+//			}
+//		}
+//		System.out.println("Nr Reads = " + readsNr);
+//		System.out.println("Nr Writes = " + writesNr);
+//		System.out.println("Nr Conflicts = " + edges.size());
+		// ============================================
 		ArrayList<Cycle> allCycles = getCycles(edges);
 
 		ArrayList<Cycle> NonTrivialCycles = getNonTrivialCycles(allCycles);
@@ -1195,21 +1223,21 @@ public abstract class Tools {
 		result += " \n";
 
 		if (NonTrivialCycles.isEmpty()) {
-			result += "<< The given set of transactions is ALLOWED under NO ISOLATION level >> \n";
+			result += "<< The given set of transactions is ROBUST against NO ISOLATION level >> \n";
 			result += "====================================================================== \n";
 			result += " \n";
 		} else {
-			result += "<< The given set of transactions is NOT ALLOWED under NO ISOLATION level >> \n";
+			result += "<< The given set of transactions is NOT ROBUST against NO ISOLATION level >> \n";
 			result += "====================================================================== \n";
 			result += " \n";
 		}
 
 		if (prefWConfFreeCycles.isEmpty()) {
-			result += "<< The given set of transactions is ALLOWED under READ UNCOMMITTED level >> \n";
+			result += "<< The given set of transactions is ROBUST against READ UNCOMMITTED level >> \n";
 			result += "====================================================================== \n";
 			result += " \n";
 		} else {
-			result += "<< The given set of transactions is NOT ALLOWED under READ UNCOMMITTED level >> \n";
+			result += "<< The given set of transactions is NOT ROBUST against READ UNCOMMITTED level >> \n";
 			result += " \n";
 			result += "The Prefix-Write Conflict-Free Cycles Are: \n";
 			for (int i = 0; i < prefWConfFreeCycles.size(); i++) {
@@ -1227,11 +1255,11 @@ public abstract class Tools {
 		}
 
 		if (multiPrefCycles.isEmpty()) {
-			result += "<< The given set of transactions is ALLOWED under READ COMMITTED level >> \n";
+			result += "<< The given set of transactions is ROBUST against READ COMMITTED level >> \n";
 			result += "====================================================================== \n";
 			result += " \n";
 		} else {
-			result += "<< The given set of transactions is NOT ALLOWED under READ COMMITTED level >> \n";
+			result += "<< The given set of transactions is NOT ROBUST against READ COMMITTED level >> \n";
 			result += " \n";
 			result += "The Multi-Prefix Conflict-Free Cycles Are: \n";
 			for (int i = 0; i < multiPrefCycles.size(); i++) {
